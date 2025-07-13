@@ -1,0 +1,20 @@
+{% extends "index.html" %}
+{% block content %}
+  <h2>Monthly Totals</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Total (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for month, total in data.items() %}
+        <tr>
+          <td>{{ month }}</td>
+          <td>{{ total|currency }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

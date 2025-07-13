@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICF Enschede Offering Counter</title>
+  <!-- Use ICF Enschede CSS for consistent styling -->
+  <link rel="stylesheet" href="https://www.icf-enschede.nl/wp-content/themes/icf-enschede/style.css">
+  <!-- App-specific stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="site-logo">
+      <a href="/">
+        <img src="https://www.icf-enschede.nl/wp-content/uploads/2024/01/icf-logo.svg" alt="ICF Enschede Logo">
+      </a>
+    </div>
+    <h1>Offering Counter</h1>
+  </header>
+
+  <main class="container">
+    <nav>
+      <ul class="menu">
+        <li><a href="/">Manual Count</a></li>
+        <li><a href="/upload">Import Givt CSV</a></li>
+        <li><a href="/report">Monthly Report</a></li>
+        <li><a href="/export">Export CSV</a></li>
+      </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; {{ current_year }} ICF Enschede</p>
+  </footer>
+
+  <!-- ICF site JS -->
+  <script src="https://www.icf-enschede.nl/wp-content/themes/icf-enschede/js/main.js"></script>
+  <!-- App JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

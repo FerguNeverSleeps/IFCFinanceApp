@@ -1,0 +1,25 @@
+/* Additional styling to match ICF theme */
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 1rem;
+}
+.denomination-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.denom-item {
+  flex: 1 1 100px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
