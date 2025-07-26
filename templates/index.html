@@ -3,11 +3,17 @@
   <head><title>Finance App</title></head>
   <body>
     <h1>Welcome to Finance App</h1>
-    <button onclick="location.href='{{ url_for(offering) }}'">
-      Count Offering Money
-    </button>
-    <button onclick="location.href='{{ url_for(upload) }}'">
-      Upload GIVT Excel
-    </button>
+<!--    <button onclick="location.href='{{ url_for('offering') }}'">-->
+<!--      Count Offering Money-->
+<!--    </button>-->
+    <a href="{{ url_for('offering') }}">
+      <button>Count Offering Money</button>
+    </a>
+<!--    <button onclick="location.href='{{ url_for('upload') }}'">-->
+<!--      Upload GIVT Excel-->
+<!--    </button>-->
+  <a href="{{ url_for('upload') }}">
+    <button>Upload GIVT Excel</button>
+  </a>
   </body>
 </html>
