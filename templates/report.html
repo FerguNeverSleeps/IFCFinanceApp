@@ -1,20 +1,12 @@
-{% extends "index.html" %}
-{% block content %}
-  <h2>Monthly Totals</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Month</th>
-        <th>Total (€)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for month, total in data.items() %}
-        <tr>
-          <td>{{ month }}</td>
-          <td>{{ total|currency }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endblock %}
+<!doctype html>
+<html>
+  <head><title>Report of Total Income</title></head>
+  <body>
+    <h2>Report of Total Income</h2>
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".xls,.xlsx" required><br>
+      <button type="submit">Upload &amp; Process</button>
+    </form>
+    <a href="index.html">← Back</a>
+  </body>
+</html>
