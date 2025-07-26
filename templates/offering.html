@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <head><title>Offering Entry</title></head>
+  <body>
+    <h2>Record Offering</h2>
+    <form method="post">
+      <label>Date: <input type="date" name="date" required></label><br>
+      <label>Total Amount: <input type="number" step="0.01" name="total" required></label><br>
+      <button type="submit">Save</button>
+    </form>
+    <a href="{{ url_for('index') }}">← Back</a>
+  </body>
+</html>

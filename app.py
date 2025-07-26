@@ -7,34 +7,33 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///offerings.db'
 db = SQLAlchemy(app)
 
+# Database Model
 class Transaction(db.Model):
-    id        = db.Column(db.Integer, primary_key=True)
-    source    = db.Column(db.String(20))       # 'manual' or 'givt'
-    date      = db.Column(db.Date)
-    amount    = db.Column(db.Float)
+    id = db.Column(db.Integer, primary_key=True)
+    source = db.Column(db.String(20))  # 'manual' or 'givt'
+    date = db.Column(db.Date)
+    amount = db.Column(db.Float)
 
-db.create_all()
+# Create DB
+with app.app_context():
+    db.create_all()
 
+# Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', current_year=date.today().year)
 
-# ... more routes below ...
+@app.route('/manual-count')
+def manual_count():
+    return render_template('indexmanual.html', current_year=date.today().year)
 
-if __name__ == "__main__":
+@app.route('/import-givt')
+def import_givt():
+    return render_template('upload.html', current_year=date.today().year)
+
+@app.route('/monthly-report')
+def report():
+    return render_template('report.html', current_year=date.today().year)
+
+if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-@app.route('/add_manual', methods=['POST'])
-def add_manual():
-    total = 0.0
-    for denom_str in request.form:
-        if denom_str.startswith('qty_'):
-            denom = float(denom_str.split('_')[1])
-            qty   = int(request.form[denom_str])
-            total += denom * qty
-    txn = Transaction(source='manual', date=date.today(), amount=total)
-    db.session.add(txn)
-    db.session.commit()
-    return redirect(url_for('index'))

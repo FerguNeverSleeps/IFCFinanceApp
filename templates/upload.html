@@ -1,8 +1,12 @@
-{% extends "index.html" %}
-{% block content %}
-  <h2>Upload Givt CSV</h2>
-  <form method="POST" action="{{ url_for('upload_givt') }}" enctype="multipart/form-data">
-    <input type="file" name="givt_csv" accept=".csv" required>
-    <button class="btn btn-secondary">Upload</button>
-  </form>
-{% endblock %}
+<!doctype html>
+<html>
+  <head><title>Upload GIVT Excel</title></head>
+  <body>
+    <h2>Upload Excel from GIVT</h2>
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".xls,.xlsx" required><br>
+      <button type="submit">Upload &amp; Process</button>
+    </form>
+    <a href="{{ url_for('index') }}">← Back</a>
+  </body>
+</html>
