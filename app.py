@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, make_response
+from flask import Flask, render_template, request, redirect, url_for, make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date
@@ -13,6 +13,12 @@ class Transaction(db.Model):
     source = db.Column(db.String(20))  # 'manual' or 'givt'
     date = db.Column(db.Date)
     amount = db.Column(db.Float)
+
+
+class Offering(db.Model):
+    id            = db.Column(db.Integer, primary_key=True)
+    date          = db.Column(db.Date,   nullable=False)
+    total_amount  = db.Column(db.Float,  nullable=False)
 
 # Create DB
 with app.app_context():
@@ -34,6 +40,39 @@ def import_givt():
 @app.route('/monthly-report')
 def report():
     return render_template('report.html', current_year=date.today().year)
+
+@app.route('/offering', methods=['GET', 'POST'])
+def offering():
+ if request.method == 'POST':
+# new: read each denomination count and compute total
+    denoms = {
+        '0.50': 0.50,
+        '1.00': 1.00,
+        '2.00': 2.00,
+        '5.00': 5.00,
+        '10.00': 10.00
+    }
+    total = 0.0
+    has_entry = False
+    for label, value in denoms.items():
+        field = f"count_{label.replace('.', '_')}"
+        # convert missing or blank to zero
+        cnt = int(request.form.get(field, 0) or 0)
+        if cnt > 0:
+            has_entry = True
+            total += cnt * value
+    if not has_entry:
+        flash('Please enter at least one denomination count.', 'error')
+        return redirect(url_for('offering'))
+    # now save
+    date = request.form.get('date')
+    off = Offering(date=date, total_amount=total)
+    db.session.add(off)
+    db.session.commit()
+
+    flash(f'Offering of {total:.2f} saved.', 'success')
+    return redirect(url_for('index'))
+    return render_template('offering.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
