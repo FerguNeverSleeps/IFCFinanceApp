@@ -20,6 +20,11 @@ class Offering(db.Model):
     date          = db.Column(db.Date,   nullable=False)
     total_amount  = db.Column(db.Float,  nullable=False)
 
+class GivtUpload(db.Model):
+    id           = db.Column(db.Integer, primary_key=True)
+    filename     = db.Column(db.String(256), nullable=False)
+    uploaded_at  = db.Column(db.DateTime, server_default=db.func.now())
+
 # Create DB
 with app.app_context():
     db.create_all()
