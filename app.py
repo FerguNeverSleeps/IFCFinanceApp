@@ -1,4 +1,6 @@
 # app.py
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
@@ -78,6 +80,48 @@ def offering():
     flash(f'Offering of {total:.2f} saved.', 'success')
     return redirect(url_for('index'))
     return render_template('offering.html')
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        # 1. Grab the file object from the submitted form
+        #    request.files is a dict of uploaded files; 'file' matches the <input name="file">
+        f = request.files.get('file')
+
+        # 2. If the user submitted the form without choosing a file, flash an error and reload
+        if not f:
+            flash('No file selected', 'error')
+            return redirect(url_for('upload'))
+
+        # 3. Extract the original filename
+        fn = f.filename
+
+        # 4. Build a full path under our configured UPLOAD_FOLDER
+        #    This is where we'll save the file on disk
+        path = os.path.join(app.config['UPLOAD_FOLDER'], fn)
+
+        # 5. Save the uploaded file to the server filesystem
+        f.save(path)
+
+        # 6. Use pandas to read the Excel file into a DataFrame
+        #    You can then transform/process the DataFrame as needed
+        df = pd.read_excel(path)
+
+        # 7. Record in the database that this file was uploaded
+        #    We don’t store the file contents here—just metadata
+        up = GivtUpload(filename=fn)
+        db.session.add(up)
+        db.session.commit()
+
+        # 8. Let the user know we’ve successfully received and processed the file
+        flash(f'File "{fn}" uploaded and processed.', 'success')
+
+        # 9. Redirect back to the main page (or wherever you prefer)
+        return redirect(url_for('index'))
+
+    # If it’s a GET request, simply show the upload form
+    return render_template('upload.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
