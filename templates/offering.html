@@ -1,23 +1,127 @@
 <!doctype html>
 <html>
-  <head><title>Offering Entry</title></head>
-  <body>
-    <h2>Record Offering</h2>
-    <form method="post">
-      <label>Date: <input type="date" name="date" required></label><br><br>
-      <fieldset>
-        <legend>Denomination Counts:</legend>
-        <label>0.50:  <input type="number" min="0" name="count_0_50" value="0"></label><br>
-        <label>1.00:   <input type="number" min="0" name="count_1_00" value="0"></label><br>
-        <label>2.00:   <input type="number" min="0" name="count_2_00" value="0"></label><br>
-        <label>5.00:   <input type="number" min="0" name="count_5_00" value="0"></label><br>
-        <label>10.00:  <input type="number" min="0" name="count_10_00" value="0"></label><br>
-        <label>20.00:  <input type="number" min="0" name="count_10_00" value="0"></label><br>
-        <label>50.00:  <input type="number" min="0" name="count_10_00" value="0"></label><br>
-        <label>100.00:  <input type="number" min="0" name="count_10_00" value="0"></label><br>
-      </fieldset><br>
-      <button type="submit">Save</button>
-    </form>
+<head>
+  <title>Offering Entry</title>
+  <style>
+    fieldset { border: 1px solid #ccc; padding: 1em; }
+    .denom-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5em;
+    }
+    .denom-row label {
+      width: 6em;
+    }
+    .denom-row input[type="number"] {
+      width: 4em;
+      margin-right: 1em;
+    }
+    .denom-row .line-value {
+      width: 6em;
+      text-align: right;
+      border: none;
+      background: none;
+      font-weight: bold;
+    }
+    #grand-total {
+      margin-top: 1em;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Record Offering</h2>
+  <form method="post">
+    <label>
+      Date:
+      <input type="date" name="date" required>
+    </label>
+    <br><br>
+    <fieldset>
+      <legend>Denomination Counts:</legend>
+
+      <div class="denom-row" data-denom="0.50">
+        <label>0.50:</label>
+        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="1.00">
+        <label>1.00:</label>
+        <input type="number" min="0" value="0" name="count_1_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="2.00">
+        <label>2.00:</label>
+        <input type="number" min="0" value="0" name="count_2_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="5.00">
+        <label>5.00:</label>
+        <input type="number" min="0" value="0" name="count_5_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="10.00">
+        <label>10.00:</label>
+        <input type="number" min="0" value="0" name="count_10_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="20.00">
+        <label>20.00:</label>
+        <input type="number" min="0" value="0" name="count_20_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="50.00">
+        <label>50.00:</label>
+        <input type="number" min="0" value="0" name="count_50_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+      <div class="denom-row" data-denom="100.00">
+        <label>100.00:</label>
+        <input type="number" min="0" value="0" name="count_100_00" class="count-input">
+        <input type="text" readonly class="line-value" value="$0.00">
+      </div>
+
+    </fieldset>
+
+    <div id="grand-total">Grand Total: $0.00</div>
+    <br>
+    <button type="submit">Save</button>
+  </form>
     <a href="index.html">← Back</a>
+   <script>
+    // find all rows and the grand-total container
+    const rows = document.querySelectorAll('.denom-row');
+    const grandEl = document.getElementById('grand-total');
+
+    function recalc() {
+      let grand = 0;
+      rows.forEach(row => {
+        const denom = parseFloat(row.dataset.denom);
+        const cnt   = parseInt(row.querySelector('.count-input').value) || 0;
+        const line  = denom * cnt;
+        grand += line;
+        row.querySelector('.line-value')
+           .value = '$' + line.toFixed(2);
+      });
+      grandEl.textContent = 'Grand Total: $' + grand.toFixed(2);
+    }
+
+    // wire up inputs
+    rows.forEach(row => {
+      row.querySelector('.count-input')
+         .addEventListener('input', recalc);
+    });
+
+    // init
+    recalc();
+  </script>
   </body>
 </html>
