@@ -1,0 +1,41 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+# Initialize SQLAlchemy ORM
+db = SQLAlchemy()
+
+class ExcelUpload(db.Model):
+    __tablename__ = 'excel_uploads'
+    id = db.Column(db.Integer, primary_key=True)  # unique ID
+    filename = db.Column(db.String(255), nullable=False)  # original filename
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow())  # timestamp of upload
+    parsed_success = db.Column(db.Boolean, default=False)  # did parsing complete?
+
+    # Relationship to Transaction: one upload → many transactions
+    transactions = db.relationship('Transaction', backref='excel_upload', lazy=True)
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    id = db.Column(db.Integer, primary_key=True)  # unique ID
+    date = db.Column(db.Date, nullable=False)  # date of transaction
+    subject = db.Column(db.String(255))  # description (e.g., "GIVT + Rabo Direct")
+    source = db.Column(db.String(50))  # 'bank' or 'cash'
+    amount = db.Column(db.Float, nullable=False)  # transaction amount
+    category = db.Column(db.String(100), nullable=True)  # optional category tag
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # record creation time
+
+    # ForeignKey linking back to which Excel file it came from
+    excel_upload_id = db.Column(db.Integer, db.ForeignKey('excel_uploads.id'), nullable=True)
+    # Relationship to OfferingCashSplit: one transaction → many cash splits
+    cash_splits = db.relationship('OfferingCashSplit', backref='transaction', lazy=True)
+
+class OfferingCashSplit(db.Model):
+    __tablename__ = 'offering_cash_split'
+    id = db.Column(db.Integer, primary_key=True)  # unique ID
+    date = db.Column(db.Date, nullable=False)  # service date
+    denomination = db.Column(db.Float, nullable=False)  # coin/bill value (e.g., 0.50)
+    count = db.Column(db.Integer, nullable=False)  # number of items counted
+    type = db.Column(db.String(10), nullable=False)  # 'coin' or 'bill'
+
+    # ForeignKey linking back to the aggregated cash transaction
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=True)

@@ -1,12 +1,55 @@
 <!doctype html>
-<html>
-  <head><title>Report of Total Income</title></head>
-  <body>
-    <h2>Report of Total Income</h2>
-    <form method="post" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".xls,.xlsx" required><br>
-      <button type="submit">Upload &amp; Process</button>
-    </form>
-    <a href="index.html">← Back</a>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Income Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    h2 { margin-bottom: 1em; }
+    form { margin-bottom: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    nav a { margin-right: 1em; text-decoration: none; color: #007BFF; }
+    nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="upload.html">Upload Excel</a>
+    <a href="offering.html">Record Offering</a>
+    <a href="index.html">Back Home</a>
+  </nav>
+  <h2>Income Report</h2>
+
+  <form method="get" id="view-toggle">
+    <label><input type="radio" name="view" value="daily" {{ 'checked' if view=='daily' else '' }}> Daily</label>
+    <label><input type="radio" name="view" value="monthly" {{ 'checked' if view=='monthly' else '' }}> Monthly</label>
+    <label><input type="radio" name="view" value="yearly" {{ 'checked' if view=='yearly' else '' }}> Yearly</label>
+    <button type="submit">Refresh</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'Date' if view=='daily' else view.capitalize() }}</th>
+        <th>Bank (€)</th>
+        <th>Cash (€)</th>
+        <th>Total (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.period }}</td>
+        <td>{{ '%.2f'|format(row.bank) }}</td>
+        <td>{{ '%.2f'|format(row.cash) }}</td>
+        <td>{{ '%.2f'|format(row.total) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
 </html>

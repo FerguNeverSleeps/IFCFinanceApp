@@ -1,153 +1,120 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Offering Entry</title>
   <style>
     fieldset { border: 1px solid #ccc; padding: 1em; }
-    .denom-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5em;
-    }
-    .denom-row label {
-      width: 6em;
-    }
-    .denom-row input[type="number"] {
-      width: 4em;
-      margin-right: 1em;
-    }
-    .denom-row .line-value {
-      width: 6em;
-      text-align: right;
-      border: none;
-      background: none;
-      font-weight: bold;
-    }
-    #grand-total {
-      margin-top: 1em;
-      font-size: 1.5em;
-      font-weight: bold;
-    }
+    .denom-row { display: flex; align-items: center; margin-bottom: 0.5em; }
+    .denom-row label { width: 6em; }
+    .denom-row input[type="number"] { width: 4em; margin-right: 1em; }
+    .denom-row .line-value { width: 6em; text-align: right; border: none; background: none; font-weight: bold; }
+    #grand-total { margin-top: 1em; font-size: 1.5em; font-weight: bold; }
   </style>
 </head>
 <body>
   <h2>Record Offering</h2>
-  <form method="post">
-    <label>
-      Date:
-      <input type="date" name="date" required>
-    </label>
-    <br><br>
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for cat,msg in messages %}
+        <li class="{{cat}}">{{msg}}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Denomination count form -->
+  <form method="post" action="{{ url_for('cash_split_entry') }}">
+    <label>Date: <input type="date" name="date" required></label><br><br>
     <fieldset>
       <legend>Denomination Counts:</legend>
 
       <div class="denom-row" data-denom="100.00">
-        <label>100.00:</label>
-        <input type="number" min="0" value="0" name="count_100_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>100.00 &euro;:</label>
+        <input type="number" min="0" name="count_100_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="50.00">
-        <label>50.00:</label>
-        <input type="number" min="0" value="0" name="count_50_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>50.00 &euro;:</label>
+        <input type="number" min="0" name="count_50_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="20.00">
-        <label>20.00:</label>
-        <input type="number" min="0" value="0" name="count_20_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>20.00 &euro;:</label>
+        <input type="number" min="0" name="count_20_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="10.00">
-        <label>10.00:</label>
-        <input type="number" min="0" value="0" name="count_10_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>10.00 &euro;:</label>
+        <input type="number" min="0" name="count_10_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="5.00">
-        <label>5.00:</label>
-        <input type="number" min="0" value="0" name="count_5_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>5.00 &euro;:</label>
+        <input type="number" min="0" name="count_5_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="2.00">
-        <label>2.00:</label>
-        <input type="number" min="0" value="0" name="count_2_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>2.00 &euro;:</label>
+        <input type="number" min="0" name="count_2_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="1.00">
-        <label>1.00:</label>
-        <input type="number" min="0" value="0" name="count_1_00" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>1.00 &euro;:</label>
+        <input type="number" min="0" name="count_1_00" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="0.50">
-        <label>0.50:</label>
-        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>0.50 &euro;:</label>
+        <input type="number" min="0" name="count_0_50" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="0.20">
-        <label>0.20:</label>
-        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>0.20 &euro;:</label>
+        <input type="number" min="0" name="count_0_20" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
-       <div class="denom-row" data-denom="0.10">
-        <label>0.10:</label>
-        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+      <div class="denom-row" data-denom="0.10">
+        <label>0.10 &euro;:</label>
+        <input type="number" min="0" name="count_0_10" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="0.05">
-        <label>0.05:</label>
-        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>0.05 &euro;:</label>
+        <input type="number" min="0" name="count_0_05" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
       <div class="denom-row" data-denom="0.01">
-        <label>0.01:</label>
-        <input type="number" min="0" value="0" name="count_0_50" class="count-input">
-        <input type="text" readonly class="line-value" value="$0.00">
+        <label>0.01 &euro;:</label>
+        <input type="number" min="0" name="count_0_01" value="0" class="count-input">
+        <input type="text" readonly class="line-value" value="&euro;0.00">
       </div>
-
-
 
     </fieldset>
-
-    <div id="grand-total">Grand Total: $0.00</div>
-    <br>
+    <div id="grand-total">Grand Total: &euro;0.00</div><br>
     <button type="submit">Save</button>
   </form>
-    <a href="index.html">← Back</a>
-   <script>
-    // find all rows and the grand-total container
+  <p><a href="upload.html">← Back</a> | <a href="report.html">Report</a></p>
+  <script>
     const rows = document.querySelectorAll('.denom-row');
     const grandEl = document.getElementById('grand-total');
-
     function recalc() {
       let grand = 0;
       rows.forEach(row => {
         const denom = parseFloat(row.dataset.denom);
-        const cnt   = parseInt(row.querySelector('.count-input').value) || 0;
-        const line  = denom * cnt;
+        const cnt = parseInt(row.querySelector('.count-input').value) || 0;
+        const line = denom * cnt;
         grand += line;
-        row.querySelector('.line-value')
-           .value = '$' + line.toFixed(2);
+        // Use Unicode escape for euro symbol in JS
+        row.querySelector('.line-value').value = '€' + line.toFixed(2);
       });
-      grandEl.textContent = 'Grand Total: $' + grand.toFixed(2);
+      grandEl.textContent = 'Grand Total: €' + grand.toFixed(2);
     }
-
-    // wire up inputs
-    rows.forEach(row => {
-      row.querySelector('.count-input')
-         .addEventListener('input', recalc);
-    });
-
-    // init
+    rows.forEach(row => row.querySelector('.count-input').addEventListener('input', recalc));
     recalc();
   </script>
-  </body>
+</body>
 </html>
