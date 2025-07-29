@@ -191,8 +191,8 @@ def cash_split_entry():
 
 
 # --- Route: View Report ---
-@app.route('/report')
-def report():
+@app.route('/reportfinance', methods=['GET'])
+def reportfinance_view():
     view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
     from sqlalchemy import func
 
