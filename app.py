@@ -92,7 +92,7 @@ def offering():
     return render_template('offering.html')
 
 
-@app.route('/file_upload', methods=['POST'])
+@app.route('/file_upload.html', methods=['POST'])
 def file_upload():
     file = request.files['file']
 
@@ -106,7 +106,7 @@ def file_upload():
 
 
 # --- Route: Upload Excel ---
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/upload.html', methods=['GET', 'POST'])
 def upload_excel():
     if request.method == 'POST':
         # Retrieve uploaded file object
@@ -143,7 +143,7 @@ def upload_excel():
     return render_template('upload.html')
 
 # --- Route: Record Cash Split ---
-@app.route('/cash-split', methods=['GET', 'POST'])
+@app.route('/offering.html', methods=['GET', 'POST'])
 def cash_split_entry():
     if request.method == 'POST':
         date = request.form['date']  # service date
@@ -191,7 +191,7 @@ def cash_split_entry():
 
 
 # --- Route: View Report ---
-@app.route('/reportfinance', methods=['GET'])
+@app.route('/report.html', methods=['GET'])
 def reportfinance_view():
     view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
     from sqlalchemy import func

@@ -97,7 +97,7 @@
     <div id="grand-total">Grand Total: &euro;0.00</div><br>
     <button type="submit">Save</button>
   </form>
-  <p><a href="upload.html">← Back</a> | <a href="report.html">Report</a></p>
+  <p><a href="{{ url_for('index') }}">← Back</a> | <a href="report.html">Report</a></p>
   <script>
     const rows = document.querySelectorAll('.denom-row');
     const grandEl = document.getElementById('grand-total');
