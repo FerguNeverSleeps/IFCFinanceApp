@@ -7,8 +7,11 @@ from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date
 
+from werkzeug.utils import secure_filename
+
 from models import OfferingCashSplit, ExcelUpload
 
+# --- Flask App Configuration ---
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///offerings.db'
 db = SQLAlchemy(app)
