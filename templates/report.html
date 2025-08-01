@@ -19,14 +19,14 @@
   <nav>
     <a href="upload.html">Upload Excel</a>
     <a href="offering.html">Record Offering</a>
-    <a href="{{ url_for('index') }}">Back Home</a>
+    <a href="index.html">Back Home</a>
   </nav>
   <h2>Income Report</h2>
 
   <form method="get" id="view-toggle">
-    <label><input type="radio" name="view" value="daily" {{ 'checked' if view=='daily' else '' }}> Daily</label>
-    <label><input type="radio" name="view" value="monthly" {{ 'checked' if view=='monthly' else '' }}> Monthly</label>
-    <label><input type="radio" name="view" value="yearly" {{ 'checked' if view=='yearly' else '' }}> Yearly</label>
+    <label><input type="radio" name="view" value="daily" > Daily</label>
+    <label><input type="radio" name="view" value="monthly" > Monthly</label>
+    <label><input type="radio" name="view" value="yearly" > Yearly</label>
     <button type="submit">Refresh</button>
   </form>
 
