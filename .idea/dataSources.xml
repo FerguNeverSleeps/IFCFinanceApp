@@ -15,5 +15,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/ICFfinance</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="mockDB" uuid="0e9d182f-99bd-4590-a909-c9a4c34f7e03">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://0.tcp.ngrok.io:11127/ICFfinance</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

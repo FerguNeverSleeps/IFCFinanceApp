@@ -27,7 +27,7 @@
   {% endwith %}
 
   <!-- Denomination count form -->
-  <form method="post" action="/cash-split">
+  <form method="post">
     <label>Date: <input type="date" name="date" required></label><br><br>
     <fieldset>
       <legend>Denomination Counts:</legend>
@@ -95,6 +95,19 @@
 
     </fieldset>
     <div id="grand-total">Grand Total: &euro;0.00</div><br>
+    <input type="hidden" name="total_cash" id="total_cash_input" value="0">
+    <div class="person-row" data-denom="counted by">
+        <label>Counted By:</label>
+        <input type="text" name="counted_by">
+      </div>
+    <div class="person-row" data-denom="checked by">
+        <label>Checked By:</label>
+        <input type="text" name="checked_by">
+      </div>
+    <div class="person-row" data-denom="carrier of envelope">
+        <label>Carrier of Envelope:</label>
+        <input type="text" name="carrier_of_envelope">
+      </div>
     <button type="submit">Save</button>
   </form>
   <p><a href="index.html">← Back</a> | <a href="report.html">Report</a></p>
@@ -112,6 +125,8 @@
         row.querySelector('.line-value').value = '€' + line.toFixed(2);
       });
       grandEl.textContent = 'Grand Total: €' + grand.toFixed(2);
+      // write into the hidden field
+      document.getElementById('total_cash_input').value = grand.toFixed(2);
     }
     rows.forEach(row => row.querySelector('.count-input').addEventListener('input', recalc));
     recalc();
