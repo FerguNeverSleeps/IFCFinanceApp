@@ -122,6 +122,12 @@ def cash_split_entry():
 
         db.session.flush()  # assign temporary IDs to splits
 
+        # ... your existing split logic to compute `total_cash` ...
+
+        counted_by = request.form.get('counted_by')
+        checked_by = request.form.get('checked_by')
+        carrier_of_envelope = request.form.get('carrier_of_envelope')
+
         # Create one aggregated Transaction for this cash offering
         cash_tx = Transaction(
             date=date,
@@ -129,6 +135,9 @@ def cash_split_entry():
             source='cash',
             amount=total_cash,
             category='Manual Offering',
+            counted_by=counted_by,
+            checked_by=checked_by,
+            carrier_of_envelope=carrier_of_envelope
         )
         db.session.add(cash_tx)
         db.session.flush()  # assign cash_tx.id

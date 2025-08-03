@@ -96,21 +96,24 @@
     </fieldset>
     <div id="grand-total">Grand Total: &euro;0.00</div><br>
     <input type="hidden" name="total_cash" id="total_cash_input" value="0">
-    <div class="person-row" data-denom="counted by">
-        <label>Counted By:</label>
-        <input type="text" name="counted_by">
-      </div>
-    <div class="person-row" data-denom="checked by">
-        <label>Checked By:</label>
-        <input type="text" name="checked_by">
-      </div>
-    <div class="person-row" data-denom="carrier of envelope">
-        <label>Carrier of Envelope:</label>
-        <input type="text" name="carrier_of_envelope">
-      </div>
+    <fieldset style="margin-top:1em; border:1px solid #ccc; padding:1em;">
+    <legend>Personnel</legend>
+    <div>
+      <label style="display:inline-block;width:8em;">Counted By:</label>
+      <input type="text" name="counted_by" value="{{request.form.counted_by or ''}}">
+    </div>
+    <div>
+      <label style="display:inline-block;width:8em;">Checked By:</label>
+      <input type="text" name="checked_by" value="{{request.form.checked_by or ''}}">
+    </div>
+    <div>
+      <label style="display:inline-block;width:8em;">Carrier of Envelope:</label>
+      <input type="text" name="carrier_of_envelope" value="{{request.form.carrier_of_envelope or ''}}">
+    </div>
+  </fieldset>
     <button type="submit">Save</button>
   </form>
-  <p><a href="index.html">← Back</a> | <a href="report.html">Report</a></p>
+  <p><a href="/">← Back</a> | <a href="report.html">Report</a></p>
   <script>
     const rows = document.querySelectorAll('.denom-row');
     const grandEl = document.getElementById('grand-total');

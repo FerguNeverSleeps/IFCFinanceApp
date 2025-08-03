@@ -23,6 +23,10 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)  # transaction amount
     category = db.Column(db.String(100), nullable=True)  # optional category tag
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # record creation time
+    # Who counted and checked the cash, and who carried the envelope
+    counted_by = db.Column(db.String(100), nullable=True)
+    checked_by = db.Column(db.String(100), nullable=True)
+    carrier_of_envelope = db.Column(db.String(100), nullable=True)
 
     # ForeignKey linking back to which Excel file it came from
     excel_upload_id = db.Column(db.Integer, db.ForeignKey('excel_uploads.id'), nullable=True)
