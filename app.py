@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date
 import openpyxl
+from models import db, Offering
 
 from werkzeug.utils import secure_filename
 
@@ -17,8 +18,10 @@ import secrets
 
 
 # --- Flask App Configuration ---
+ngrok_num = "8"
+port_num = "19699"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@0.tcp.ngrok.io:11127/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@t{ngrok_num}.cp.ngrok.io:{port_num}/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
@@ -98,9 +101,9 @@ def upload_excel():
         print(f"→ About to call parse_excel on {filepath!r}")
         try:
             # Parse Excel, insert Transaction rows
-            parse_excel(filepath, upload_entry.id)
+            count = parse_excel(filepath, upload_entry.id)  # adds to session
             upload_entry.parsed_success = True
-            db.session.commit()
+            db.session.commit()  # one commit for both upload row and transactions
             flash("File uploaded and parsed successfully!", "success")
         except Exception as e:
             # Show any parsing errors
@@ -197,32 +200,125 @@ def reportfinance_view():
 
 # --- Utility Function: Parse Excel ---
 def parse_excel(filepath, upload_id):
-    print(f"→ About to call parse_excel on {filepath!r}")
-    # Load workbook and target sheet
-    xls = pd.ExcelFile(filepath)
-    df = xls.parse("Account Rabo Lopend ICF")
+    """
+            Parse the Excel file and add Transaction rows to db.session.
+            - DOES NOT commit; caller should commit/rollback.
+            - Returns the number of Transaction rows added.
+            """
 
-    # Use first row as header, drop it, reset index
-    df.columns = df.iloc[0]
-    df = df.drop(index=0).reset_index(drop=True)
+    def _ffill(seq):
+        cur = None;
+        out = []
+        for x in seq:
+            if pd.notna(x): cur = x
+            out.append(cur)
+        return out
 
-    # Convert columns to correct types
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
-    df = df.dropna(subset=['Date','Amount'])  # remove invalid rows
+    def _combine_headers(df_raw):
+        """
+        Sheets use two header rows:
+        row 0: category names (e.g., 'Events', 'GIVT')
+        row 1: column names or 'Debet'/'Credit'
+        """
+        top = _ffill(df_raw.iloc[0].tolist())
+        sub = df_raw.iloc[1].tolist()
+        cols = []
+        for t, s in zip(top, sub):
+            if isinstance(s, str) and s.strip() and s.lower() not in ("debet", "credit"):
+                cols.append(s)  # Date, Subject, Amount, Booked, ...
+            elif isinstance(s, str) and s.lower() in ("debet", "credit"):
+                cols.append(f"{t}|{s}")  # e.g., "Events|Debet"
+            else:
+                cols.append(str(t or s))
+        df = df_raw.iloc[2:].reset_index(drop=True)
+        df.columns = cols
+        return df
 
-    # Insert each row as a Transaction
-    for _, row in df.iterrows():
-        tx = Transaction(
-            date=row['Date'],
-            subject=row.get('Subject',''),
-            source='bank',
-            amount=row['Amount'],
-            category=row.get('Surplus',''),
-            excel_upload_id=upload_id
-        )
-        db.session.add(tx)
-    db.session.commit()
+    from models import Transaction  # adjust import path if needed
+
+    inserted = 0
+    xls = pd.ExcelFile(filepath, engine="openpyxl")
+
+    # ---------- Sheet: Account Rabo Lopend ICF ----------
+    if "Account Rabo Lopend ICF" in xls.sheet_names:
+        df_raw = xls.parse("Account Rabo Lopend ICF", header=None)
+        df = _combine_headers(df_raw)
+
+        # normalize types
+        if "Date" not in df.columns:
+            raise ValueError("Missing 'Date' column in 'Account Rabo Lopend ICF'")
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
+
+        cat_cols = [c for c in df.columns if "|" in c]  # category Debet/Credit columns
+
+        for _, row in df.iterrows():
+            if pd.isna(row.get("Date")) and pd.isna(row.get("Amount")):
+                continue
+
+            category = None
+            signed_amount = None
+            # choose first non-zero category cell; Debet = +, Credit = -
+            for c in cat_cols:
+                v = row.get(c)
+                if pd.notna(v) and isinstance(v, (int, float)) and v != 0:
+                    name, side = c.split("|", 1)
+                    category = name
+                    signed_amount = float(v) * (1 if side.lower() == "debet" else -1)
+                    break
+
+            # fallback to Amount column
+            if signed_amount is None and "Amount" in df.columns and pd.notna(row.get("Amount")):
+                signed_amount = float(row["Amount"])
+
+            if signed_amount is None:
+                continue
+
+            tx = Transaction(
+                date=row["Date"],
+                subject=(row.get("Subject") or ""),
+                source="bank",
+                amount=signed_amount,
+                category=category,
+                excel_upload_id=upload_id,
+            )
+            db.session.add(tx)
+            inserted += 1
+
+    # ---------- Sheet: Account Rabo Spaar ICF ----------
+    if "Account Rabo Spaar ICF" in xls.sheet_names:
+        df_raw = xls.parse("Account Rabo Spaar ICF", header=None)
+        df = _combine_headers(df_raw)
+        if "Date" not in df.columns:
+            raise ValueError("Missing 'Date' column in 'Account Rabo Spaar ICF'")
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
+
+        for _, row in df.iterrows():
+            if pd.isna(row.get("Date")) and pd.isna(row.get("Amount")):
+                continue
+
+            debit = row.get("Spaarrekening|Debet")
+            credit = row.get("Spaarrekening|Credit")
+            if pd.notna(debit) and debit != 0:
+                signed_amount = float(debit)  # money to savings
+            elif pd.notna(credit) and credit != 0:
+                signed_amount = -float(credit)  # money from savings
+            elif pd.notna(row.get("Amount")):
+                signed_amount = float(row["Amount"])
+            else:
+                continue
+
+            tx = Transaction(
+                date=row["Date"],
+                subject=(row.get("Subject") or ""),
+                source="bank",
+                amount=signed_amount,
+                category="Spaarrekening",
+                excel_upload_id=upload_id,
+            )
+            db.session.add(tx)
+            inserted += 1
+
+    return inserted
 
 
 if __name__ == "__main__":

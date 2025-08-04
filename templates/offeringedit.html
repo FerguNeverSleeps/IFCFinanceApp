@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head><title>Edit Offering</title></head>
+  <body>
+    <h2>Edit Offering on {{ offer.date }}</h2>
+    <form method="post">
+      <div>
+        <label>
+          <input type="checkbox" name="deposit_status"
+                 {% if offer.deposit_status %} checked{% endif %}>
+          Deposited to Bank
+        </label>
+      </div>
+      <div>
+        <label>
+          Deposit Date:
+          <input type="date" name="deposit_date"
+                 value="{{ offer.deposit_date or '' }}">
+        </label>
+      </div>
+      <button type="submit">Save</button>
+    </form>
+    <p><a href="offeringsview.html">← Back to Offerings</a></p>
+  </body>
+</html>

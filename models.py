@@ -43,3 +43,15 @@ class OfferingCashSplit(db.Model):
 
     # ForeignKey linking back to the aggregated cash transaction
     transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=True)
+
+class Offering(db.Model):
+    __tablename__ = 'offerings'
+
+    id                   = db.Column(db.Integer, primary_key=True)
+    date                 = db.Column(db.Date,    nullable=False)
+    total_amount               = db.Column(db.Numeric(12,2), nullable=False)
+    counted_by           = db.Column(db.String(100), nullable=True)
+    checked_by           = db.Column(db.String(100), nullable=True)
+    carrier_of_envelope  = db.Column(db.String(100), nullable=True)
+    deposit_status       = db.Column(db.Boolean, default=False, nullable=False)
+    deposit_date         = db.Column(db.Date,    nullable=True)
