@@ -312,6 +312,27 @@ def parse_excel(filepath, upload_id):
 
     return inserted
 
+@app.route('/offerings', methods=['GET'])
+def offerings_list():
+    # query from the Offering table (or Transaction if you kept it there)
+    offers = Offering.query.order_by(Offering.date.desc()).all()
+    return render_template('offeringsview.html', offers=offers)
+
+@app.route('/offerings/<int:id>/edit', methods=['GET','POST'])
+def edit_offering(id):
+    offer = Offering.query.get_or_404(id)
+    if request.method == 'POST':
+        # update deposit status & date
+        offer.deposit_status = bool(request.form.get('deposit_status'))
+        date_str = request.form.get('deposit_date')
+        if date_str:
+            from datetime import datetime
+            offer.deposit_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        db.session.commit()
+        flash("Offering updated.", "success")
+        return redirect('offeringsview.html')
+    return render_template('offeringedit.html', offer=offer)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0",debug=True)
