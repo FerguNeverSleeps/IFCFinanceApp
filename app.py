@@ -18,15 +18,16 @@ import secrets
 
 
 # --- Flask App Configuration ---
-ngrok_num = "8"
-port_num = "19699"
+ngrok_num = "0"
+port_num = "14950"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@0.tcp.ngrok.io:14950/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
 
 # Database Model
+
 
 
 class GivtUpload(db.Model):
@@ -121,20 +122,23 @@ def cash_split_entry():
 
         # ... your existing split logic to compute `total_cash` ...
 
-        counted_bi = request.form.get('counted_by')
+        counted_by = request.form.get('counted_by')
         checked_by = request.form.get('checked_by')
         carrier_of_envelope = request.form.get('carrier_of_envelope')
 
-        # Create one aggregated Transaction for this cash offering
-        cash_tx = Offering(
+        # (2) insert into the offerings table
+        offer = Offering(
             date=date,
             total_amount=total_cash,
-            counted_by=counted_bi,
+            counted_by=counted_by,
             checked_by=checked_by,
-            carrier_of_envelope=carrier_of_envelope
+            carrier_of_envelope=carrier_of_envelope,
         )
-        db.session.add(cash_tx)
+        db.session.add(offer)
         db.session.flush()  # assign cash_tx.id
+
+
+
         db.session.commit()  # save both splits and transaction
         flash("Cash split and total recorded.", "success")
         return redirect('offering.html')
@@ -307,6 +311,27 @@ def parse_excel(filepath, upload_id):
             inserted += 1
 
     return inserted
+
+@app.route('/offerings', methods=['GET'])
+def offerings_list():
+    # query from the Offering table (or Transaction if you kept it there)
+    offers = Offering.query.order_by(Offering.date.desc()).all()
+    return render_template('offeringsview.html', offers=offers)
+
+@app.route('/offerings/<int:id>/edit', methods=['GET','POST'])
+def edit_offering(id):
+    offer = Offering.query.get_or_404(id)
+    if request.method == 'POST':
+        # update deposit status & date
+        offer.deposit_status = bool(request.form.get('deposit_status'))
+        date_str = request.form.get('deposit_date')
+        if date_str:
+            from datetime import datetime
+            offer.deposit_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        db.session.commit()
+        flash("Offering updated.", "success")
+        return redirect('offeringsview.html')
+    return render_template('offeringedit.html', offer=offer)
 
 
 if __name__ == "__main__":
