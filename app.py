@@ -21,7 +21,7 @@ import secrets
 ngrok_num = "8"
 port_num = "19699"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@t{ngrok_num}.cp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@8.tcp.ngrok.io:19699/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
