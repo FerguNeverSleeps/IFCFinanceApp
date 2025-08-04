@@ -49,7 +49,7 @@ class Offering(db.Model):
 
     id                   = db.Column(db.Integer, primary_key=True)
     date                 = db.Column(db.Date,    nullable=False)
-    total_amount               = db.Column(db.Numeric(12,2), nullable=False)
+    total_amount         = db.Column(db.Numeric(12,2), nullable=False)
     counted_by           = db.Column(db.String(100), nullable=True)
     checked_by           = db.Column(db.String(100), nullable=True)
     carrier_of_envelope  = db.Column(db.String(100), nullable=True)

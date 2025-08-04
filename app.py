@@ -18,10 +18,10 @@ import secrets
 
 
 # --- Flask App Configuration ---
-ngrok_num = "8"
-port_num = "19699"
+ngrok_num = "0"
+port_num = "14950"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@8.tcp.ngrok.io:19699/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
@@ -29,11 +29,6 @@ db = SQLAlchemy(app)
 # Database Model
 
 
-
-class Offering(db.Model):
-    id            = db.Column(db.Integer, primary_key=True)
-    date          = db.Column(db.Date,   nullable=False)
-    total_amount  = db.Column(db.Float,  nullable=False)
 
 class GivtUpload(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -131,18 +126,15 @@ def cash_split_entry():
         checked_by = request.form.get('checked_by')
         carrier_of_envelope = request.form.get('carrier_of_envelope')
 
-        # Create one aggregated Transaction for this cash offering
-        cash_tx = Transaction(
+        # (2) insert into the offerings table
+        offer = Offering(
             date=date,
-            subject='Cash Offering',
-            source='cash',
-            amount=total_cash,
-            category='Manual Offering',
+            total_amount=total_cash,
             counted_by=counted_by,
             checked_by=checked_by,
-            carrier_of_envelope=carrier_of_envelope
+            carrier_of_envelope=carrier_of_envelope,
         )
-        db.session.add(cash_tx)
+        db.session.add(offer)
         db.session.flush()  # assign cash_tx.id
 
 

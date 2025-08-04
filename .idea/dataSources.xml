@@ -19,7 +19,7 @@
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://8.tcp.ngrok.io:19699/ICFfinance</jdbc-url>
+      <jdbc-url>jdbc:postgresql://0.tcp.ngrok.io:14950/ICFfinance</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
