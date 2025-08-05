@@ -3,10 +3,11 @@ import os
 import traceback
 
 import pandas
-from flask import Flask, render_template, request, redirect, url_for, make_response, flash
+from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 import pandas as pd, io, csv
-from datetime import date
+from datetime import date, datetime
 import openpyxl
 from models import db, Offering
 
@@ -21,7 +22,7 @@ import secrets
 ngrok_num = "0"
 port_num = "14950"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@4.tcp.ngrok.io:16445/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
@@ -312,26 +313,60 @@ def parse_excel(filepath, upload_id):
 
     return inserted
 
-@app.route('/offerings', methods=['GET'])
+@app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():
+    sql = text("""
+               SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope,
+                   deposit_status,deposit_date
+               FROM offerings
+               ORDER BY date DESC
+               """)
     # query from the Offering table (or Transaction if you kept it there)
-    offers = Offering.query.order_by(Offering.date.desc()).all()
+    offers = db.session.execute(sql).mappings().all()
     return render_template('offeringsview.html', offers=offers)
 
-@app.route('/offerings/<int:id>/edit', methods=['GET','POST'])
-def edit_offering(id):
-    offer = Offering.query.get_or_404(id)
-    if request.method == 'POST':
-        # update deposit status & date
-        offer.deposit_status = bool(request.form.get('deposit_status'))
-        date_str = request.form.get('deposit_date')
-        if date_str:
-            from datetime import datetime
-            offer.deposit_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+@app.route('/offeringedit.html', methods=['GET','POST'])
+def edit_offering():
+    # id from query string (?id=123) or hidden input on POST
+    offer_id = request.args.get("id", type=int) or request.form.get("id", type=int)
+    if not offer_id:
+        abort(400, description="Missing offering id")
+
+    # --- FETCH via SQL (replaces Offering.query.get_or_404) ---
+    offer = db.session.execute(
+        text("""
+             SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope, deposit_status, deposit_date
+             FROM offerings
+             WHERE id = :id
+             """),
+        {"id": offer_id},
+    ).mappings().first()
+    if offer is None:
+        abort(404)
+
+    if request.method == "POST":
+        deposit_status = "deposit_status" in request.form
+        date_str = (request.form.get("deposit_date") or "").strip()
+        deposit_date = (
+            datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
+        )
+
+        # --- UPDATE via SQL ---
+        db.session.execute(
+            text("""
+                 UPDATE offerings
+                 SET deposit_status = :status,
+                     deposit_date   = :date
+                 WHERE id = :id
+                 """),
+            {"status": deposit_status, "date": deposit_date, "id": offer_id},
+        )
         db.session.commit()
         flash("Offering updated.", "success")
-        return redirect('offeringsview.html')
-    return render_template('offeringedit.html', offer=offer)
+        return redirect(url_for("offerings_list"))
+
+    # GET – render form
+    return render_template("offeringedit.html", offer=offer, id=offer_id)
 
 
 if __name__ == "__main__":

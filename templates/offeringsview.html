@@ -75,9 +75,9 @@
   <h2>Cash Offerings</h2>
 
   <form method="get" id="view-toggle">
-    <label><input type="radio" name="view" value="daily" {{ 'checked' if view=='daily' else '' }}> Daily</label>
-    <label><input type="radio" name="view" value="monthly" {{ 'checked' if view=='monthly' else '' }}> Monthly</label>
-    <label><input type="radio" name="view" value="yearly" {{ 'checked' if view=='yearly' else '' }}> Yearly</label>
+    <label><input type="radio" name="view" value="daily"> Daily</label>
+    <label><input type="radio" name="view" value="monthly"> Monthly</label>
+    <label><input type="radio" name="view" value="yearly" > Yearly</label>
     <button type="submit">Refresh</button>
   </form>
 
@@ -97,14 +97,15 @@
     <tbody>
       {% for o in offers %}
       <tr>
+        <td>{{o.id}}</td>
         <td>{{ o.date }}</td>
-        <td>{{ '%.2f'|format(o.amount) }}</td>
+        <td>{{ '%.2f'|format(o.total_amount) }}</td>
         <td>{{ o.counted_by or '-' }}</td>
         <td>{{ o.checked_by or '-' }}</td>
         <td>{{ o.carrier_of_envelope or '-' }}</td>
         <td>{{ 'Yes' if o.deposit_status else 'No' }}</td>
         <td>{{ o.deposit_date or '-' }}</td>
-        <td><a href="offeringedit.html" class="edit-link">Edit</a></td>
+        <td><a href="/offeringedit.html?id={{ o.id }}" class="edit-link">Edit</a></td>
       </tr>
       {% else %}
       <tr>
