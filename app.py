@@ -328,6 +328,20 @@ def offerings_list():
 
 @app.route('/offeringedit.html', methods=['GET','POST'])
 def edit_offering():
+    # 1) Grab optional date‐range filters so we can re‐render the list after POST
+    start = request.args.get('start_date', '')
+    end = request.args.get('end_date', '')
+
+    # 2) Build the same list query you used in /offerings list
+    qry = db.session.query(Offering)
+    if start:
+        sd = datetime.strptime(start, '%Y-%m-%d').date()
+        qry = qry.filter(Offering.date >= sd)
+    if end:
+        ed = datetime.strptime(end, '%Y-%m-%d').date()
+        qry = qry.filter(Offering.date <= ed)
+    offers = qry.order_by(Offering.date.desc()).all()
+
     # id from query string (?id=123) or hidden input on POST
     offer_id = request.args.get("id", type=int) or request.form.get("id", type=int)
     if not offer_id:
@@ -364,7 +378,12 @@ def edit_offering():
         )
         db.session.commit()
         flash("Offering updated.", "success")
-        return redirect(url_for("offerings_list"))
+        #return redirect(url_for("offerings_list"))
+        # Pass the raw start/end strings back so the form can re-fill its inputs
+        return render_template('offerings.html',
+                               offers=offers,
+                               start_date=start or '',
+                               end_date=end or '')
 
     # GET – render form
     return render_template("offeringedit.html", offer=offer, id=offer_id)
