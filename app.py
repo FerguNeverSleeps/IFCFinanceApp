@@ -5,10 +5,11 @@ import traceback
 import pandas
 from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
+from sqlalchemy import text
+
 from models import db, Offering
 
 from werkzeug.utils import secure_filename
@@ -20,9 +21,9 @@ import secrets
 
 # --- Flask App Configuration ---
 ngrok_num = "0"
-port_num = "14950"
+port_num = "15277"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tavs:190501@4.tcp.ngrok.io:16445/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
@@ -320,13 +321,27 @@ def offerings_list():
                    deposit_status,deposit_date
                FROM offerings
                ORDER BY date DESC
-               """)
+""")
     # query from the Offering table (or Transaction if you kept it there)
     offers = db.session.execute(sql).mappings().all()
     return render_template('offeringsview.html', offers=offers)
 
 @app.route('/offeringedit.html', methods=['GET','POST'])
 def edit_offering():
+    # 1) Grab optional date‐range filters so we can re‐render the list after POST
+    start = request.args.get('start_date', '')
+    end = request.args.get('end_date', '')
+
+    # 2) Build the same list query you used in /offerings list
+    qry = db.session.query(Offering)
+    if start:
+        sd = datetime.strptime(start, '%Y-%m-%d').date()
+        qry = qry.filter(Offering.date >= sd)
+    if end:
+        ed = datetime.strptime(end, '%Y-%m-%d').date()
+        qry = qry.filter(Offering.date <= ed)
+    offers = qry.order_by(Offering.date.desc()).all()
+
     # id from query string (?id=123) or hidden input on POST
     offer_id = request.args.get("id", type=int) or request.form.get("id", type=int)
     if not offer_id:
@@ -363,11 +378,15 @@ def edit_offering():
         )
         db.session.commit()
         flash("Offering updated.", "success")
-        return redirect(url_for("offerings_list"))
+        #return redirect(url_for("offerings_list"))
+        # Pass the raw start/end strings back so the form can re-fill its inputs
+        return render_template('offerings.html',
+                               offers=offers,
+                               start_date=start or '',
+                               end_date=end or '')
 
     # GET – render form
     return render_template("offeringedit.html", offer=offer, id=offer_id)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0",debug=True)

@@ -74,10 +74,43 @@
 
   <h2>Cash Offerings</h2>
 
+  <!-- New date‐range filter -->
+<form method="get" id="month-year-filter" style="margin:1em 0;">
+  <label>
+    Month:
+    <select name="month">
+      <option value="">All</option>
+      {% for num, name in [
+           (1,'January'),(2,'February'),(3,'March'),
+           (4,'April'),  (5,'May'),     (6,'June'),
+           (7,'July'),   (8,'August'),  (9,'September'),
+           (10,'October'),(11,'November'),(12,'December')
+      ] %}
+        <option value="{{num}}"
+                {% if num==selected_month %}selected{% endif %}>
+          {{name}}
+        </option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label style="margin-left:1em;">
+    Year:
+    <select name="year">
+      <option value="">All</option>
+      {% for y in year_options %}
+        <option value="{{y}}"
+                {% if y==selected_year %}selected{% endif %}>
+          {{y}}
+        </option>
+      {% endfor %}
+    </select>
+  </label>
+
   <form method="get" id="view-toggle">
     <label><input type="radio" name="view" value="daily"> Daily</label>
     <label><input type="radio" name="view" value="monthly"> Monthly</label>
-    <label><input type="radio" name="view" value="yearly" > Yearly</label>
+    <label><input type="radio" name="view" value="yearly"> Yearly</label>
     <button type="submit">Refresh</button>
   </form>
 
@@ -97,7 +130,6 @@
     <tbody>
       {% for o in offers %}
       <tr>
-        <td>{{o.id}}</td>
         <td>{{ o.date }}</td>
         <td>{{ '%.2f'|format(o.total_amount) }}</td>
         <td>{{ o.counted_by or '-' }}</td>
