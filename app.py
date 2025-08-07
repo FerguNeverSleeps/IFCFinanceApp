@@ -16,17 +16,22 @@ from werkzeug.utils import secure_filename
 
 from models import OfferingCashSplit, ExcelUpload, Transaction
 import secrets
+from flask import current_app
+from sqlalchemy import func
 
 
 
 # --- Flask App Configuration ---
-ngrok_num = "0"
-port_num = "15277"
+ngrok_num = "6"
+port_num = "13629"
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
+
+# bind the single shared db from models.py
+db.init_app(app)
 
 # Database Model
 
@@ -40,6 +45,78 @@ class GivtUpload(db.Model):
 # Create DB
 with app.app_context():
     db.create_all()
+
+
+
+def _totals_transactions(source: str, view: str):
+    """Sum Transaction.amount grouped by day/month/year (your bank transactions)."""
+    dialect = db.get_engine(current_app).dialect.name
+
+    if dialect == "postgresql":
+        if view == "daily":
+            g = func.date(Transaction.date)
+            p = func.to_char(g, 'YYYY-MM-DD')
+        elif view == "monthly":
+            g = func.date_trunc('month', Transaction.date)
+            p = func.to_char(g, 'YYYY-MM')
+        else:
+            g = func.date_trunc('year', Transaction.date)
+            p = func.to_char(g, 'YYYY')
+    else:  # sqlite
+        if view == "daily":
+            p = func.strftime('%Y-%m-%d', Transaction.date)
+        elif view == "monthly":
+            p = func.strftime('%Y-%m', Transaction.date)
+        else:
+            p = func.strftime('%Y', Transaction.date)
+        g = p
+
+    q = (
+        db.session.query(
+            p.label('period'),
+            func.sum(Transaction.amount).label('total'),
+        )
+        .filter(Transaction.source == source)
+        .group_by(g)
+        .order_by(g)
+    )
+    return [(r.period, float(r.total or 0)) for r in q.all()]
+
+
+def _totals_offerings(view: str):
+    """Sum Offering.total_amount grouped by day/month/year (your cash)."""
+    dialect = db.get_engine(current_app).dialect.name
+
+    if dialect == "postgresql":
+        if view == "daily":
+            g = func.date(Offering.date)
+            p = func.to_char(g, 'YYYY-MM-DD')
+        elif view == "monthly":
+            g = func.date_trunc('month', Offering.date)
+            p = func.to_char(g, 'YYYY-MM')
+        else:
+            g = func.date_trunc('year', Offering.date)
+            p = func.to_char(g, 'YYYY')
+    else:  # sqlite
+        if view == "daily":
+            p = func.strftime('%Y-%m-%d', Offering.date)
+        elif view == "monthly":
+            p = func.strftime('%Y-%m', Offering.date)
+        else:
+            p = func.strftime('%Y', Offering.date)
+        g = p
+
+    q = (
+        db.session.query(
+            p.label('period'),
+            func.sum(Offering.total_amount).label('total'),
+        )
+        .group_by(g)
+        .order_by(g)
+    )
+    return [(r.period, float(r.total or 0)) for r in q.all()]
+
+
 
 # Routes
 @app.route('/')
@@ -153,45 +230,24 @@ def cash_split_entry():
 # --- Route: View Report ---
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
-    view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
-    from sqlalchemy import func
+    view = request.args.get('view', 'monthly')  # 'daily'|'monthly'|'yearly'
 
-    # Helper to query sums by period (bank vs. cash)
-    def query_totals(source, fmt):
-        return (
-            db.session.query(
-                func.strftime(fmt, Transaction.date).label('period'),
-                func.sum(Transaction.amount).label('total')
-            )
-            .filter(Transaction.source == source)
-            .group_by('period')
-            .all()
-        )
+    # bank from Transactions, cash from Offerings
+    bank_rows = _totals_transactions('bank', view)
+    cash_rows = _totals_offerings(view)
 
-    # Determine SQL strftime format based on view
-    fmt_map = {'daily':'%Y-%m-%d','monthly':'%Y-%m','yearly':'%Y'}
-    fmt = fmt_map.get(view, '%Y-%m')
+    # merge
+    report = {}
+    for period, total in bank_rows:
+        report.setdefault(period, {'bank': 0.0, 'cash': 0.0})['bank'] = total
+    for period, total in cash_rows:
+        report.setdefault(period, {'bank': 0.0, 'cash': 0.0})['cash'] = total
 
-    # Fetch bank and cash totals
-    bank = query_totals('bank', fmt)
-    cash = query_totals('cash', fmt)
-
-    # Combine into a single data structure for the template
-    report_data = {}
-    for period, total in bank:
-        report_data.setdefault(period, {'bank': 0, 'cash': 0})['bank'] = total
-    for period, total in cash:
-        report_data.setdefault(period, {'bank': 0, 'cash': 0})['cash'] = total
-
-    # Convert to sorted list of rows
-    rows = sorted([
+    rows = [
         {'period': p, 'bank': v['bank'], 'cash': v['cash'], 'total': v['bank'] + v['cash']}
-        for p, v in report_data.items()
-    ], key=lambda x: x['period'])
-
-    # Render report template with context
+        for p, v in sorted(report.items(), key=lambda kv: kv[0])
+    ]
     return render_template('report.html', view=view, rows=rows)
-
 # --- Utility Function: Parse Excel ---
 def parse_excel(filepath, upload_id):
     """
