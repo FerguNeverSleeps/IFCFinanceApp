@@ -14,16 +14,17 @@ from models import db, Offering
 
 from werkzeug.utils import secure_filename
 
-from models import OfferingCashSplit, ExcelUpload, Transaction
+from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1
 import secrets
 
 
 
 # --- Flask App Configuration ---
-ngrok_num = "0"
-port_num = "15277"
+port_num = "5432"
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+#app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@localhost:{port_num}/ICFfinance'
+
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
@@ -387,6 +388,43 @@ def edit_offering():
 
     # GET – render form
     return render_template("offeringedit.html", offer=offer, id=offer_id)
+@app.route('/transactions.html', methods=['GET', 'POST'])
+def transaction_input():
+    if request.method == 'POST':
+        date = request.form['tdate']  # service date
+        total_cash = float(request.form['tamount'] or 0)
+
+        db.session.flush()  # assign temporary IDs to splits
+
+        # ... your existing split logic to compute `total_cash` ...
+
+        subject = request.form.get('tsubject')
+        category = request.form.get('tcategory')
+        category = category.lower()
+        tcreated = request.form.get('tcreated_at')
+        tcreated = tcreated.lower()
+        tspending = request.form.get('tspending')
+        tspending = tspending.lower()
+        # (2) insert into the offerings table
+        offer = transaction1(
+            date=date,
+            amount=total_cash,
+            category=category,
+            subject=subject,
+            created_at=tcreated,
+            type_ofspending=tspending
+        )
+        db.session.add(offer)
+        db.session.flush()  # assign cash_tx.id
+
+        db.session.commit()  # save both splits and transaction
+        flash("Financial input recorded", "success")
+        return redirect('transactions.html')
+
+    # GET: render the cash split form
+    # GET: render the offering entry template
+    return render_template('transactions.html')
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0",debug=True)

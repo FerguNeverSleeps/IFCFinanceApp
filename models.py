@@ -55,3 +55,14 @@ class Offering(db.Model):
     carrier_of_envelope  = db.Column(db.String(100), nullable=True)
     deposit_status       = db.Column(db.Boolean, default=False, nullable=False)
     deposit_date         = db.Column(db.Date,    nullable=True)
+#transaction for the table of registering spending
+class transaction1(db.Model):
+    __tablename__ = 'transaction'
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(20), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    category = db.Column(db.String(255), nullable=True)
+    amount = db.Column(db.Float, nullable=False)
+    type_ofspending = db.Column(db.String(255), nullable=False)
+    excel_upload_id = db.Column(db.Integer, db.ForeignKey('excel_uploads.id'), nullable=True)
+    created_at = db.Column(db.String(255),nullable=False)
