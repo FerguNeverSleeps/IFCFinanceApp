@@ -23,12 +23,18 @@
   </nav>
   <h2>Income Report</h2>
 
-  <form method="get" id="view-toggle">
-    <label><input type="radio" name="view" value="daily" > Daily</label>
-    <label><input type="radio" name="view" value="monthly" > Monthly</label>
-    <label><input type="radio" name="view" value="yearly" > Yearly</label>
-    <button type="submit">Refresh</button>
-  </form>
+  <form method="get" action="{{ url_for('reportfinance_view') }}" style="margin-bottom:1rem;">
+  <label>
+    From:
+    <input type="date" name="start_date" value="{{ start_date or '' }}">
+  </label>
+  <label style="margin-left:0.5rem;">
+    To:
+    <input type="date" name="end_date" value="{{ end_date or '' }}">
+  </label>
+  <button type="submit">Filter</button>
+  <a href="{{ url_for('reportfinance_view') }}" style="margin-left:0.5rem;">Clear</a>
+</form>
 
   <table>
     <thead>
