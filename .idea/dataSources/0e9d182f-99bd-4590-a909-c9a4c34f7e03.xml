@@ -3,9 +3,17 @@
   <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.53">
     <root id="1">
       <DateStyle>mdy</DateStyle>
-      <IntrospectionStateNumber>829</IntrospectionStateNumber>
+      <Grants>1||-9223372036854775808|c|G
+1||10|c|G
+1||10|C|G
+1||10|T|G
+4||-9223372036854775808|c|G
+4||10|c|G
+4||10|C|G
+4||10|T|G</Grants>
+      <IntrospectionStateNumber>839</IntrospectionStateNumber>
       <ServerVersion>17.5</ServerVersion>
-      <StartupTime>1754596288</StartupTime>
+      <StartupTime>1754799346</StartupTime>
       <TimeZones>true ACDT
 true ACSST
 false ACST
@@ -801,7 +809,7 @@ false Zulu
 13664||10|C|G
 13664||-9223372036854775808|U|G
 13664||10|U|G</Grants>
-      <IntrospectionStateNumber>829</IntrospectionStateNumber>
+      <IntrospectionStateNumber>839</IntrospectionStateNumber>
       <ObjectId>16388</ObjectId>
       <OwnerName>tavs</OwnerName>
     </database>
@@ -4233,8 +4241,8 @@ false Zulu
     <schema id="266" parent="2" name="public">
       <Comment>standard public schema</Comment>
       <Current>1</Current>
-      <IntrospectionStateNumber>829</IntrospectionStateNumber>
-      <LastIntrospectionLocalTimestamp>2025-08-07.20:00:21</LastIntrospectionLocalTimestamp>
+      <IntrospectionStateNumber>839</IntrospectionStateNumber>
+      <LastIntrospectionLocalTimestamp>2025-08-12.20:21:32</LastIntrospectionLocalTimestamp>
       <ObjectId>2200</ObjectId>
       <StateNumber>531</StateNumber>
       <OwnerName>pg_database_owner</OwnerName>

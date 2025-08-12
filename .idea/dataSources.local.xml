@@ -3,10 +3,14 @@
   <component name="dataSourceStorageLocal" created-in="PY-251.26927.90">
     <data-source name="MockDB" uuid="be8a1d7a-e718-4c3a-93a1-77cd1086a7d6">
       <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>tavs</user-name>
       <schema-mapping />
     </data-source>
     <data-source name="ICFfinance@localhost" uuid="f616f9b1-e596-4e2b-899a-1eabe764ae90">
       <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>tavs</user-name>
       <schema-mapping />
     </data-source>
     <data-source name="mockDB" uuid="0e9d182f-99bd-4590-a909-c9a4c34f7e03">
@@ -14,6 +18,7 @@
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
       <case-sensitivity plain-identifiers="lower" quoted-identifiers="exact" />
+      <secret-storage>master_key</secret-storage>
       <user-name>tavs</user-name>
       <schema-mapping>
         <introspection-scope>
