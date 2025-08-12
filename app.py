@@ -329,7 +329,18 @@ def offerings_list():
                ORDER BY date DESC
 """)
     # query from the Offering table (or Transaction if you kept it there)
-    offers = db.session.execute(sql).mappings().all()
+    # Run the query
+    result = db.session.execute(sql)
+
+    # Convert rows to plain dicts in a version-safe way
+    offers = []
+    for row in result:
+        # SQLAlchemy 1.4/2.0: row._mapping is a Mapping
+        if hasattr(row, "_mapping"):
+            offers.append(dict(row._mapping))
+        else:
+            # Older versions: RowProxy is already dict-able
+            offers.append(dict(row))
     return render_template('offeringsview.html', offers=offers)
 
 @app.route('/offeringedit.html', methods=['GET','POST'])
@@ -386,7 +397,7 @@ def edit_offering():
         flash("Offering updated.", "success")
         #return redirect(url_for("offerings_list"))
         # Pass the raw start/end strings back so the form can re-fill its inputs
-        return render_template('offerings.html',
+        return render_template('offeringsview.html',
                                offers=offers,
                                start_date=start or '',
                                end_date=end or '')
