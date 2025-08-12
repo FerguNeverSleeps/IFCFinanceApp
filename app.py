@@ -151,85 +151,53 @@ def cash_split_entry():
     # GET: render the cash split form
     # GET: render the offering entry template
     return render_template('offering.html')
-
-
+@app.route('/report.html', methods=['GET'])
+def reportfinance_view():
+    view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
+    return render_template('report.html', view=view)
+''' 
 # --- Route: View Report ---
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
-    """
-    Render the report with optional start/end date filters.
-    Works on PostgreSQL and SQLite by switching date functions per dialect.
-    Groups by calendar day.
-    """
-    # Read and parse date filters (YYYY-MM-DD from the date inputs)
-    start_str = (request.args.get('start_date') or '').strip()
-    end_str   = (request.args.get('end_date') or '').strip()
-    start_dt  = datetime.strptime(start_str, '%Y-%m-%d').date() if start_str else None
-    end_dt    = datetime.strptime(end_str,   '%Y-%m-%d').date() if end_str   else None
+    view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
+    from sqlalchemy import func
 
-    # Which database are we talking to?
-    bind = db.session.get_bind()           # <- bound engine for *this* session
-    dialect = (bind.dialect.name if bind else 'sqlite').lower()
-
-    # Period column (string used in the table) and group column (used in GROUP BY)
-    if dialect == 'postgresql':
-        # show like 2025-08-04, group by date(date)
-        period_expr = func.to_char(Transaction.date, 'YYYY-MM-DD')
-        group_expr  = cast(Transaction.date, Date)
-    else:
-        # SQLite path
-        period_expr = func.strftime('%Y-%m-%d', Transaction.date)
-        group_expr  = func.strftime('%Y-%m-%d', Transaction.date)
-
-    def totals_for_source(src: str):
-        q = (
+    # Helper to query sums by period (bank vs. cash)
+    def query_totals(source, fmt):
+        return (
             db.session.query(
-                period_expr.label('period'),
+                func.strftime(fmt, Transaction.date).label('period'),
                 func.sum(Transaction.amount).label('total')
             )
-            .filter(Transaction.source == src)
-        )
-        if start_dt:
-            q = q.filter(Transaction.date >= start_dt)
-        if end_dt:
-            q = q.filter(Transaction.date <= end_dt)
-        return (
-            q.group_by(group_expr)
-             .order_by(period_expr)
-             .all()
+            .filter(Transaction.source == source)
+            .group_by('period')
+            .all()
         )
 
-    # Query both sources
-    bank_rows = totals_for_source('bank')
-    cash_rows = totals_for_source('cash')
+    # Determine SQL strftime format based on view
+    fmt_map = {'daily':'%Y-%m-%d','monthly':'%Y-%m','yearly':'%Y'}
+    fmt = fmt_map.get(view, '%Y-%m')
 
-    # Merge rows by period
-    by_period = {}
-    for period, total in bank_rows:
-        by_period.setdefault(period, {'bank': 0.0, 'cash': 0.0})['bank'] = float(total or 0)
-    for period, total in cash_rows:
-        by_period.setdefault(period, {'bank': 0.0, 'cash': 0.0})['cash'] = float(total or 0)
+    # Fetch bank and cash totals
+    bank = query_totals('bank', fmt)
+    cash = query_totals('cash', fmt)
 
-    rows = sorted(
-        (
-            {
-                'period': p,
-                'bank': v['bank'],
-                'cash': v['cash'],
-                'total': v['bank'] + v['cash'],
-            }
-            for p, v in by_period.items()
-        ),
-        key=lambda r: r['period']
-    )
+    # Combine into a single data structure for the template
+    report_data = {}
+    for period, total in bank:
+        report_data.setdefault(period, {'bank': 0, 'cash': 0})['bank'] = total
+    for period, total in cash:
+        report_data.setdefault(period, {'bank': 0, 'cash': 0})['cash'] = total
 
-    return render_template(
-        'report.html',
-        rows=rows,
-        # pass the raw strings back to refill the inputs
-        start_date=start_str,
-        end_date=end_str,
-    )
+    # Convert to sorted list of rows
+    rows = sorted([
+        {'period': p, 'bank': v['bank'], 'cash': v['cash'], 'total': v['bank'] + v['cash']}
+        for p, v in report_data.items()
+    ], key=lambda x: x['period'])
+
+    # Render report template with context
+    return render_template('report.html', view=view, rows=rows)
+'''
 # --- Utility Function: Parse Excel ---
 def parse_excel(filepath, upload_id):
     """
