@@ -149,8 +149,11 @@ def cash_split_entry():
     # GET: render the cash split form
     # GET: render the offering entry template
     return render_template('offering.html')
-
-
+@app.route('/report.html', methods=['GET'])
+def reportfinance_view():
+    view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
+    return render_template('report.html', view=view)
+''' 
 # --- Route: View Report ---
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
@@ -192,7 +195,7 @@ def reportfinance_view():
 
     # Render report template with context
     return render_template('report.html', view=view, rows=rows)
-
+'''
 # --- Utility Function: Parse Excel ---
 def parse_excel(filepath, upload_id):
     """

@@ -1,17 +1,38 @@
 <html>
     <body>
+    <nav>
+    <a href="upload.html">Upload Excel</a>
+    <a href="offering.html">Record Offering</a>
+    <a href="/">Back Home</a>
+  </nav>
         <h1>Register Income or Spendings!</h1>
         <form method="post">
             <label>Date: <input type="date" name="tdate" required></label><br>
             <label>Please input the subject(such as donation or buying something from a company such as mediamarkt):</label>
-            <input type="text" id="tsubject" name="tsubject"><br>
-            <label>Please input the category(such as rent, donations, etc...):</label>
-            <input type="text" id="tcategory" name="tcategory"><br>
-            <label>Please input the type of spending(liability or asset):</label>
-            <input type="text" id="tspending" name="tspending"><br>
+            <input type="text" name="tsubject" id="tsubject" required><br>
+            <label for="tcategory">Please input the category(such as rent, donations, etc...):</label>
+            <select name="tcategory" id="tcategory">
+                <option value="rent">Rent</option>
+                <option value="charity">Charity</option>
+                <option value="GIVT">GIVT</option>
+                <option value="food/beverages">Food/Beverages</option>
+                <option value="tithe/rabo">Tithe/Rabo</option>
+                <option value="preacher">Preacher</option>
+                <option value="events">events</option>
+                <option value="attributes-church">attributes-church</option>
+                <option value="sunday-school">sunday-school</option>
+                <option value="account-spar">account-spar</option>
+                <option value="others">others</option>
+            </select><br>
+            <label for="tspending">Please input the type of spending(liability or asset):</label>
+            <select name="tspending" id="tspending">
+                <option value="asset">Asset</option>
+                <option value="liability">Liability</option>
+
+            </select><br>
              <label>Please input the total amount:</label>
             <input type="number" step="any" id="tamount" name="tamount"><br>
-            <label>Please give a small description justifying the amount:</label>
+            <label>Please give a small description clarifying the purpose of the spending:</label>
             <input type="text" id="tcreated_at" name="tcreated_at"><br>
             <input type="submit" value="Submit">
         </form>
