@@ -27,16 +27,26 @@
       style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;">
   <div>
     <label>Start date</label><br>
-    <input type="date" name="start_date" value="{{ start_date or '' }}">
+    <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}">
   </div>
   <div>
     <label>End date</label><br>
-    <input type="date" name="end_date" value="{{ end_date or '' }}">
+    <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}">
   </div>
   <div>
-    <label>Category</label><br>
-    <select name="category" style="min-width:16rem;">
-      <option value="">All categories</option>
+    <label for="category">Category</label><br>
+    <select name="category" id="category" style="min-width:16rem;">
+                <option value="rent">Rent</option>
+                <option value="charity">Charity</option>
+                <option value="GIVT">GIVT</option>
+                <option value="food/beverages">Food/Beverages</option>
+                <option value="tithe/rabo">Tithe/Rabo</option>
+                <option value="preacher">Preacher</option>
+                <option value="events">events</option>
+                <option value="attributes-church">attributes-church</option>
+                <option value="sunday-school">sunday-school</option>
+                <option value="account-spar">account-spar</option>
+                <option value="others">others</option>
        <option value="rent">Rent</option>
                 <option value="charity">Charity</option>
                 <option value="GIVT">GIVT</option>
@@ -78,28 +88,31 @@
 </script>
 </form>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Subject</th>
-        <th>Source</th>
-        <th>Category</th>
-        <th>Amount (€)</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr>
-        <td>{{ row.period }}</td>
-        <td>{{ '%.2f'|format(row.bank) }}</td>
-        <td>{{ '%.2f'|format(row.cash) }}</td>
-        <td>{{ '%.2f'|format(row.total) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-</body>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject</th>
+          <th>Type of Spending</th>
+          <th>Category</th>
+          <th>Amount (€)</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.date.strftime('%d.%m.%Y') if r.date else '' }}</td>
+            <td>{{ r.subject }}</td>
+            <td>{{ r.type_ofspending }}</td>
+            <td>{{ r.category }}</td>
+            <td class="amount">{{ '%.2f'|format(r.amount or 0) }}</td>
+            <td>{{ r.description }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No data for the selected filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
 </html>

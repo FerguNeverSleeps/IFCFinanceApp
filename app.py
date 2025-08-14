@@ -20,11 +20,11 @@ import secrets
 
 
 # --- Flask App Configuration ---
-port_num = "11497"
+port_num = "5432"
 ngrok_num = "8"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@localhost:{port_num}/ICFfinance'
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -173,10 +173,77 @@ def cash_split_entry():
     # GET: render the cash split form
     # GET: render the offering entry template
     return render_template('offering.html')
+
+def _parse_date(s: str):
+    if not s:
+        return None
+    return datetime.strptime(s, "%Y-%m-%d").date()
+
+def _load_categories():
+    sql = text("""
+        SELECT DISTINCT category
+        FROM transaction
+        WHERE category IS NOT NULL
+        ORDER BY category
+    """)
+    with db.engine.begin() as conn:
+        res = conn.execute(sql).fetchall()
+    return [row[0] for row in res]
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
-    view = request.args.get('view', 'monthly')  # options: 'daily', 'monthly', 'yearly'
-    return render_template('report.html', view=view)
+    # values coming from the form
+    start_raw = request.args.get("start_date", "")
+    end_raw = request.args.get("end_date", "")
+    selected_category = request.args.get("category", "")
+
+    # Always load categories for the <select>
+    categories = _load_categories()
+
+    # If dates aren’t selected yet, just render the page (empty table)
+    if not start_raw or not end_raw:
+        return render_template(
+            "report.html",
+            rows=[],
+            start_date=start_raw,
+            end_date=end_raw,
+            categories=categories,
+            selected_category=selected_category,
+            view=request.args.get("view", "monthly"),
+        )
+
+    # Parse to actual dates
+    start_dt = _parse_date(start_raw)
+    end_dt = _parse_date(end_raw)
+    category = selected_category or None
+
+    # Strict date range + optional category (PostgreSQL)
+    sql = text("""
+               SELECT
+        date, subject, type_ofspending, category, amount, description
+    FROM transaction
+    WHERE date BETWEEN :start_dt AND :end_dt
+      AND (:category IS NULL OR category = :category)
+    ORDER BY date ASC
+""")
+
+
+    with db.engine.begin() as conn:
+        result = conn.execute(sql, {
+            "start_dt": start_dt,
+            "end_dt": end_dt,
+            "category": category
+        })
+        rows = [dict(r._mapping) for r in result.fetchall()]
+
+    return render_template(
+        "report.html",
+        rows=rows,
+        start_date=start_raw,
+        end_date=end_raw,
+        categories=categories,
+        selected_category=selected_category,
+        view=request.args.get("view", "monthly"),
+    )
 ''' 
 # --- Route: View Report ---
 @app.route('/report.html', methods=['GET'])

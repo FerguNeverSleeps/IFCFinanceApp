@@ -64,5 +64,4 @@ class transaction1(db.Model):
     category = db.Column(db.String(255), nullable=True)
     amount = db.Column(db.Float, nullable=False)
     type_ofspending = db.Column(db.String(255), nullable=False)
-    excel_upload_id = db.Column(db.Integer, db.ForeignKey('excel_uploads.id'), nullable=True)
-    created_at = db.Column(db.String(255),nullable=False)
+    description = db.Column(db.String(255),nullable=False)
