@@ -31,9 +31,31 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
 
+def _parse_date(s):
+    if not s:
+        return None
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+def build_where_and_params(start, end, category):
+    clauses = []
+    params = {}
+
+    if start:
+        clauses.append("date >= :start")
+        params["start"] = start
+    if end:
+        clauses.append("date <= :end")
+        params["end"] = end
+    if category:
+        clauses.append("category = :category")
+        params["category"] = category
+
+    where_sql = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    return where_sql, params
 # Database Model
-
-
 
 class GivtUpload(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -319,6 +341,51 @@ def parse_excel(filepath, upload_id):
             inserted += 1
 
     return inserted
+
+@app.route('/report-summary', methods=['GET'])
+def report_summary():
+    # read query params
+    start_raw = request.args.get('start') or None
+    end_raw   = request.args.get('end') or None
+    category  = (request.args.get('category') or '').strip()
+
+    # normalize
+    start = _parse_date(start_raw)
+    end   = _parse_date(end_raw)
+    # treat "All categories" (or empty) as no filter
+    if category.lower() in ("", "all", "all categories"):
+        category = None
+
+    where_sql, params = build_where_and_params(start, end, category)
+
+    # totals
+    total_sql = text(f"""
+        SELECT COALESCE(SUM(amount), 0) AS total
+        FROM transaction
+        {where_sql}
+    """)
+
+    by_category_sql = text(f"""
+        SELECT category,
+               COALESCE(SUM(amount), 0) AS total,
+               COUNT(*) AS count
+        FROM transaction
+        {where_sql}
+        GROUP BY category
+        ORDER BY category
+    """)
+
+    total = db.session.execute(total_sql, params).scalar() or 0
+    by_category = db.session.execute(by_category_sql, params).mappings().all()
+
+    return render_template(
+        'reportsummary.html',
+        total=total,
+        by_category=by_category,
+        start=start_raw,
+        end=end_raw,
+        category=(request.args.get('category') or '').strip()
+    )#--------------------
 
 @app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():

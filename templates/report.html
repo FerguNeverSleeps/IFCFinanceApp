@@ -37,15 +37,45 @@
     <label>Category</label><br>
     <select name="category" style="min-width:16rem;">
       <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
+       <option value="rent">Rent</option>
+                <option value="charity">Charity</option>
+                <option value="GIVT">GIVT</option>
+                <option value="food/beverages">Food/Beverages</option>
+                <option value="tithe/rabo">Tithe/Rabo</option>
+                <option value="preacher">Preacher</option>
+                <option value="events">events</option>
+                <option value="attributes-church">attributes-church</option>
+                <option value="sunday-school">sunday-school</option>
+                <option value="account-spar">account-spar</option>
+                <option value="others">others</option>
     </select>
   </div>
   <div>
     <button type="submit">Filter</button>
     <a href="{{ url_for('reportfinance_view') }}" style="margin-left:.5rem;">Clear</a>
   </div>
+   <button id="summaryBtn" type="button">Report summary</button>
+
+<script>
+  (function () {
+    const el = (id) => document.getElementById(id);
+
+    document.getElementById('summaryBtn').addEventListener('click', () => {
+      const start = el('start_date')?.value || '';
+      const end   = el('end_date')?.value   || '';
+      // If your “All categories” option value is empty string, this is fine.
+      // If it’s something else, adjust the check below.
+      const category = el('category')?.value || '';
+
+      const qs = new URLSearchParams();
+      if (start) qs.set('start', start);
+      if (end)   qs.set('end', end);
+      if (category) qs.set('category', category);
+
+      window.location.href = `/report-summary?${qs.toString()}`;
+    });
+  })();
+</script>
 </form>
 
   <table>
