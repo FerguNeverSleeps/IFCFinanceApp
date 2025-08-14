@@ -20,8 +20,8 @@ import secrets
 
 
 # --- Flask App Configuration ---
-port_num = "16794"
-ngrok_num = "0"
+port_num = "11497"
+ngrok_num = "8"
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'

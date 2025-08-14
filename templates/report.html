@@ -23,26 +23,40 @@
   </nav>
   <h2>Income Report</h2>
 
-  <form method="get" action="{{ url_for('reportfinance_view') }}" style="margin-bottom:1rem;">
-  <label>
-    From:
+ <form method="get" action="{{ url_for('reportfinance_view') }}"
+      style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;">
+  <div>
+    <label>Start date</label><br>
     <input type="date" name="start_date" value="{{ start_date or '' }}">
-  </label>
-  <label style="margin-left:0.5rem;">
-    To:
+  </div>
+  <div>
+    <label>End date</label><br>
     <input type="date" name="end_date" value="{{ end_date or '' }}">
-  </label>
-  <button type="submit">Filter</button>
-  <a href="{{ url_for('reportfinance_view') }}" style="margin-left:0.5rem;">Clear</a>
+  </div>
+  <div>
+    <label>Category</label><br>
+    <select name="category" style="min-width:16rem;">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <button type="submit">Filter</button>
+    <a href="{{ url_for('reportfinance_view') }}" style="margin-left:.5rem;">Clear</a>
+  </div>
 </form>
 
   <table>
     <thead>
       <tr>
-        <th>{{ 'Date' if view=='daily' else view.capitalize() }}</th>
-        <th>Bank (€)</th>
-        <th>Cash (€)</th>
-        <th>Total (€)</th>
+        <th>Date</th>
+        <th>Subject</th>
+        <th>Source</th>
+        <th>Category</th>
+        <th>Amount (€)</th>
+        <th>Description</th>
       </tr>
     </thead>
     <tbody>
