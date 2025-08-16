@@ -1,6 +1,8 @@
 # app.py
 import os
 import traceback
+from decimal import Decimal
+from urllib.parse import urlencode
 
 import pandas
 from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort
@@ -20,24 +22,53 @@ import secrets
 
 
 # --- Flask App Configuration ---
-port_num = "5432"
-ngrok_num = "4"
+port_num = "12215"
+ngrok_num = "6"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
-
+#app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
+#ngrok
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
 
 def _parse_date(s):
+    """Return a date object from several common formats, else None."""
     if not s:
         return None
-    try:
-        return datetime.strptime(s, "%Y-%m-%d").date()
-    except ValueError:
-        return None
+    if isinstance(s, date):
+        return s
+    if isinstance(s, datetime):
+        return s.date()
+
+    s = str(s).strip()
+
+    # Most browsers send YYYY-MM-DD for <input type="date">, but accept others too
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%m-%d-%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            pass
+
+    return None
+
+def _load_categories():
+    """Distinct category list for the dropdown."""
+    sql = text('SELECT DISTINCT category FROM "transaction" ORDER BY 1;')
+    return db.session.execute(sql).scalars().all()
+
+def _is_all_category(val: str) -> bool:
+    return (val or "").strip().lower() in ("", "all", "all categories")
+
+def _tx_date_bounds():
+    row = db.session.execute(text('SELECT MIN(date) AS mind, MAX(date) AS maxd FROM "transaction";')).mappings().one()
+    # return ISO strings (empty if None)
+    return (
+        row['mind'].isoformat() if row['mind'] else "",
+        row['maxd'].isoformat() if row['maxd'] else ""
+    )
 
 def build_where_and_params(start, end, category):
     clauses = []
@@ -142,47 +173,104 @@ def upload_excel():
 @app.route('/offering.html', methods=['GET', 'POST'])
 def cash_split_entry():
     if request.method == 'POST':
-        date = request.form['date']  # service date
-        total_cash = float(request.form['total_cash'] or 0)
+        form = request.form  # used to repopulate on error
 
-        db.session.flush()  # assign temporary IDs to splits
+        # --- read fields (normalize names) ---
+        date_str = (form.get('date') or '').strip()
+        counted_by = (form.get('counted_by') or '').strip()
+        checked_by = (form.get('checked_by') or '').strip()
+        # your input might be name="carrier" or name="carrier_of_envelope"
+        carrier = (form.get('carrier') or form.get('carrier_of_envelope') or '').strip()
 
-        # ... your existing split logic to compute `total_cash` ...
+        # collect denomination counts
+        counts = []
+        for k, v in form.items():
+            if k.startswith('count_'):
+                try:
+                    counts.append(int(v or 0))
+                except ValueError:
+                    counts.append(0)
 
-        counted_by = request.form.get('counted_by')
-        checked_by = request.form.get('checked_by')
-        carrier_of_envelope = request.form.get('carrier_of_envelope')
+        # --- server-side validation ---
+        errors = []
+        if not date_str:
+            errors.append("Date is required.")
+        if not any(c > 0 for c in counts):
+            errors.append("Enter at least one denomination count > 0.")
+        if not (counted_by and checked_by and carrier):
+            errors.append("Fill Counted By, Checked By, and Carrier of Envelope.")
 
-        # (2) insert into the offerings table
+        if errors:
+            # ❗ Do NOT redirect -> re-render with the same values
+            for msg in errors:
+                flash(msg, "error")
+            return render_template('offering.html', F=form), 400
+
+        # --- success path: compute totals & save ---
+        try:
+            total_cash = float(form.get('total_cash', 0) or 0)
+        except ValueError:
+            total_cash = 0.0
+
+        if errors:
+            for msg in errors: flash(msg, "error")
+            return render_template('offering.html', F=form), 400
+
+        # --- SUCCESS PATH (replace your current save/commit code with this) ---
+
+        # 1) Convert to the exact types your DB expects
+        date_obj = _parse_date(date_str)  # returns datetime.date
+        if not date_obj:
+            flash("Invalid date format.", "error")
+            return render_template('offering.html', F=form), 400
+
+        try:
+            # Accept "600" / "600.00" / "600,00"
+            total_cash = Decimal(str(form.get('total_cash', '0')).replace(',', '.'))
+        except Exception:
+            total_cash = Decimal("0")
+
+        counted_by = form.get('counted_by')
+        checked_by = form.get('checked_by')
+        carrier = form.get('carrier') or form.get('carrier_of_envelope')
+
+        # 2) Build ORM rows with proper types
         offer = Offering(
-            date=date,
-            total_amount=total_cash,
+            date=date_obj,  # DATE, not a string
+            total_amount=total_cash,  # NUMERIC/DECIMAL
             counted_by=counted_by,
             checked_by=checked_by,
-            carrier_of_envelope=carrier_of_envelope,
+            carrier_of_envelope=carrier,
+            deposit_status=False,  # or your real default
+            deposit_date=None
         )
-        #input into transaction table
+
         tran = transaction1(
-            subject = "sunday offering",
-            date = date,
-            category = "offering",
-            amount = total_cash,
-            type_ofspending = "asset",
-            description = "sunday offering"
+            subject="sunday offering",
+            date=date_obj,  # DATE
+            category="offering",
+            amount=total_cash,  # NUMERIC/DECIMAL
+            type_ofspending="asset",
+            description="sunday offering"
         )
-        db.session.add(tran)
-        db.session.add(offer)
-        db.session.flush()  # assign cash_tx.id
 
+        # 3) Commit safely
+        try:
+            db.session.add_all([tran, offer])
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # helpful feedback + keep user input
+            flash("Database error while saving the offering. Please try again.", "error")
+            # optional: current_app.logger.exception(e)
+            return render_template('offering.html', F=form), 500
 
-
-        db.session.commit()  # save both splits and transaction
         flash("Cash split and total recorded.", "success")
-        return redirect('offering.html')
+        flash("Offering saved and PDF generated.", "success")
+        return redirect(url_for('cash_split_entry', saved='1'))
 
-    # GET: render the cash split form
-    # GET: render the offering entry template
-    return render_template('offering.html')
+        # GET: render the form (empty unless just saved)
+    return render_template('offering.html', F=None, just_saved=(request.args.get('saved') == '1'))
 
 def _parse_date(s: str):
     if not s:
@@ -199,60 +287,65 @@ def _load_categories():
     with db.engine.begin() as conn:
         res = conn.execute(sql).fetchall()
     return [row[0] for row in res]
+
+
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
-    # values coming from the form
     start_raw = request.args.get("start_date", "")
     end_raw = request.args.get("end_date", "")
-    selected_category = request.args.get("category", "")
+    selected_category = (request.args.get("category") or "").strip()
 
-    # Always load categories for the <select>
-    categories = _load_categories()
+    min_date, max_date = _tx_date_bounds()
 
-    # If dates aren’t selected yet, just render the page (empty table)
+    # first load: just render with bounds
     if not start_raw or not end_raw:
         return render_template(
             "report.html",
             rows=[],
             start_date=start_raw,
             end_date=end_raw,
-            categories=categories,
-            selected_category=selected_category,
-            view=request.args.get("view", "monthly"),
+            selected_category=(selected_category or "all categories"),
+            min_date=min_date,
+            max_date=max_date,
         )
 
-    # Parse to actual dates
+    # parse & validate
     start_dt = _parse_date(start_raw)
     end_dt = _parse_date(end_raw)
-    category = selected_category or None
+    if not start_dt or not end_dt:
+        flash("Please choose valid dates.")
+        return redirect(url_for("reportfinance_view"))
 
-    # Strict date range + optional category (PostgreSQL)
+    if start_dt > end_dt:
+        flash("End date must be on or after the start date.")
+        return redirect(url_for("reportfinance_view",
+                                start_date=start_raw, end_date=end_raw, category=selected_category))
+
+    category = None if selected_category.lower() in ("", "all", "all categories") else selected_category
+
     sql = text("""
-               SELECT
-        date, subject, type_ofspending, category, amount, description
-    FROM transaction
-    WHERE date BETWEEN :start_dt AND :end_dt
-      AND (:category IS NULL OR category = :category)
-    ORDER BY date ASC
-""")
-
+               SELECT date, subject, type_ofspending, category, amount, description
+               FROM "transaction"
+               WHERE date BETWEEN :start_dt
+                 AND :end_dt
+                 AND (:category IS NULL
+                  OR category = :category)
+               ORDER BY date ASC
+               """)
 
     with db.engine.begin() as conn:
-        result = conn.execute(sql, {
-            "start_dt": start_dt,
-            "end_dt": end_dt,
-            "category": category
-        })
-        rows = [dict(r._mapping) for r in result.fetchall()]
+        rows = [dict(r._mapping) for r in conn.execute(sql, {
+            "start_dt": start_dt, "end_dt": end_dt, "category": category
+        }).fetchall()]
 
     return render_template(
         "report.html",
         rows=rows,
         start_date=start_raw,
         end_date=end_raw,
-        categories=categories,
-        selected_category=selected_category,
-        view=request.args.get("view", "monthly"),
+        selected_category=(selected_category or "all categories"),
+        min_date=min_date,
+        max_date=max_date,
     )
 ''' 
 # --- Route: View Report ---
@@ -420,49 +513,68 @@ def parse_excel(filepath, upload_id):
     return inserted
 
 @app.route('/report-summary', methods=['GET'])
+@app.route('/report-summary', methods=['GET'])
 def report_summary():
-    # read query params
-    start_raw = request.args.get('start') or None
-    end_raw   = request.args.get('end') or None
-    category  = (request.args.get('category') or '').strip()
+    start_raw = (request.args.get('start') or request.args.get('start_date') or '').strip()
+    end_raw = (request.args.get('end') or request.args.get('end_date') or '').strip()
+    category_in = (request.args.get('category') or '').strip()
 
-    # normalize
-    start = _parse_date(start_raw)
-    end   = _parse_date(end_raw)
-    # treat "All categories" (or empty) as no filter
-    if category.lower() in ("", "all", "all categories"):
-        category = None
+    # treat “all categories” / empty as no filter
+    cat_l = category_in.lower()
+    category = None if cat_l in ('', 'all', 'all categories') else category_in
 
-    where_sql, params = build_where_and_params(start, end, category)
+    # build WHERE + params (pass real date objects)
+    params, clauses = {}, []
+    if start_raw:
+        params['start'] = _parse_date(start_raw)  # returns datetime.date
+        clauses.append('date >= :start')
+    if end_raw:
+        params['end'] = _parse_date(end_raw)
+        clauses.append('date <= :end')
+    if category is not None:
+        params['category'] = category
+        clauses.append('category = :category')
 
-    # totals
+    where_sql = ('WHERE ' + ' AND '.join(clauses)) if clauses else ''
+
     total_sql = text(f"""
-        SELECT COALESCE(SUM(amount), 0) AS total
-        FROM transaction
-        {where_sql}
-    """)
-
+           SELECT COALESCE(SUM(amount),0)::numeric(18,2) AS total
+           FROM "transaction"
+           {where_sql}
+       """)
     by_category_sql = text(f"""
-        SELECT category,
-               COALESCE(SUM(amount), 0) AS total,
-               COUNT(*) AS count
-        FROM transaction
-        {where_sql}
-        GROUP BY category
-        ORDER BY category
-    """)
+           SELECT category,
+                  COUNT(*) AS count,
+                  COALESCE(SUM(amount),0)::numeric(18,2) AS total
+           FROM "transaction"
+           {where_sql}
+           GROUP BY category
+           ORDER BY category
+       """)
+    monthly_sql = text(f"""
+           SELECT to_char(date_trunc('month', date), 'YYYY-MM') AS period,
+                  COALESCE(SUM(amount),0)::numeric(18,2) AS total
+           FROM "transaction"
+           {where_sql}
+           GROUP BY 1
+           ORDER BY 1
+       """)
 
-    total = db.session.execute(total_sql, params).scalar() or 0
-    by_category = db.session.execute(by_category_sql, params).mappings().all()
+    with db.engine.begin() as con:
+        total = con.execute(total_sql, params).scalar() or 0
+        by_category = con.execute(by_category_sql, params).mappings().all()
+        monthly = con.execute(monthly_sql, params).mappings().all()
+
+    show_monthly = len(monthly) >= 2
 
     return render_template(
         'reportsummary.html',
         total=total,
         by_category=by_category,
-        start=start_raw,
-        end=end_raw,
-        category=(request.args.get('category') or '').strip()
-    )#--------------------
+        monthly=monthly,
+        show_monthly=show_monthly,
+        start=start_raw, end=end_raw, category=category_in
+    )
 
 @app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():

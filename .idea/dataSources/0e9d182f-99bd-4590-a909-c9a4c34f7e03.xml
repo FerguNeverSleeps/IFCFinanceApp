@@ -3,15 +3,7 @@
   <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.53">
     <root id="1">
       <DateStyle>mdy</DateStyle>
-      <Grants>1||-9223372036854775808|c|G
-1||10|c|G
-1||10|C|G
-1||10|T|G
-4||-9223372036854775808|c|G
-4||10|c|G
-4||10|C|G
-4||10|T|G</Grants>
-      <IntrospectionStateNumber>854</IntrospectionStateNumber>
+      <IntrospectionStateNumber>861</IntrospectionStateNumber>
       <ServerVersion>17.5</ServerVersion>
       <StartupTime>1755160220</StartupTime>
       <TimeZones>true ACDT
@@ -809,7 +801,7 @@ false Zulu
 13664||10|C|G
 13664||-9223372036854775808|U|G
 13664||10|U|G</Grants>
-      <IntrospectionStateNumber>854</IntrospectionStateNumber>
+      <IntrospectionStateNumber>861</IntrospectionStateNumber>
       <ObjectId>16388</ObjectId>
       <OwnerName>tavs</OwnerName>
     </database>
@@ -4241,8 +4233,8 @@ false Zulu
     <schema id="266" parent="2" name="public">
       <Comment>standard public schema</Comment>
       <Current>1</Current>
-      <IntrospectionStateNumber>854</IntrospectionStateNumber>
-      <LastIntrospectionLocalTimestamp>2025-08-15.05:42:18</LastIntrospectionLocalTimestamp>
+      <IntrospectionStateNumber>861</IntrospectionStateNumber>
+      <LastIntrospectionLocalTimestamp>2025-08-16.19:16:32</LastIntrospectionLocalTimestamp>
       <ObjectId>2200</ObjectId>
       <StateNumber>531</StateNumber>
       <OwnerName>pg_database_owner</OwnerName>
@@ -4812,25 +4804,7 @@ false Zulu
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <column id="345" parent="282" name="counted_by">
-      <Position>9</Position>
-      <StateNumber>778</StateNumber>
-      <StoredType>varchar(100)|0s</StoredType>
-      <TypeId>1043</TypeId>
-    </column>
-    <column id="346" parent="282" name="checked_by">
-      <Position>10</Position>
-      <StateNumber>778</StateNumber>
-      <StoredType>varchar(100)|0s</StoredType>
-      <TypeId>1043</TypeId>
-    </column>
-    <column id="347" parent="282" name="carrier_of_envelope">
-      <Position>11</Position>
-      <StateNumber>778</StateNumber>
-      <StoredType>varchar(100)|0s</StoredType>
-      <TypeId>1043</TypeId>
-    </column>
-    <foreign-key id="348" parent="282" name="transactions_excel_upload_id_fkey">
+    <foreign-key id="345" parent="282" name="transactions_excel_upload_id_fkey">
       <ColNames>excel_upload_id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16407</ObjectId>
@@ -4838,7 +4812,7 @@ false Zulu
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16391</RefTableId>
     </foreign-key>
-    <index id="349" parent="282" name="transactions_pkey">
+    <index id="346" parent="282" name="transactions_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16405</ObjectId>
@@ -4847,13 +4821,13 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <index id="350" parent="282" name="idx_transactions_date">
+    <index id="347" parent="282" name="idx_transactions_date">
       <ColNames>date</ColNames>
       <ObjectId>16424</ObjectId>
       <StateNumber>751</StateNumber>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="351" parent="282" name="transactions_pkey">
+    <key id="348" parent="282" name="transactions_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16406</ObjectId>
       <Primary>1</Primary>

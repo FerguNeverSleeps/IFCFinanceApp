@@ -27,156 +27,258 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Denomination count form -->
-  <form method="post">
-    <label>Date: <input type="date" name="date" required></label><br><br>
-    <fieldset>
-      <legend>Denomination Counts:</legend>
+  <!-- Everything inside #offering-print is what goes into the PDF -->
+  <div id="offering-print">
+    <form id="offering-form" method="post">
+      <label>Date:
+        <input type="date" name="date" id="off_date" required
+               value="{{ F.get('date') if F else '' }}">
+      </label>
+      <br><br>
 
-      <div class="denom-row" data-denom="100.00">
-        <label>100.00 &euro;:</label>
-        <input type="number" min="0" name="count_100_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="50.00">
-        <label>50.00 &euro;:</label>
-        <input type="number" min="0" name="count_50_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="20.00">
-        <label>20.00 &euro;:</label>
-        <input type="number" min="0" name="count_20_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="10.00">
-        <label>10.00 &euro;:</label>
-        <input type="number" min="0" name="count_10_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="5.00">
-        <label>5.00 &euro;:</label>
-        <input type="number" min="0" name="count_5_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="2.00">
-        <label>2.00 &euro;:</label>
-        <input type="number" min="0" name="count_2_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="1.00">
-        <label>1.00 &euro;:</label>
-        <input type="number" min="0" name="count_1_00" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="0.50">
-        <label>0.50 &euro;:</label>
-        <input type="number" min="0" name="count_0_50" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="0.20">
-        <label>0.20 &euro;:</label>
-        <input type="number" min="0" name="count_0_20" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="0.10">
-        <label>0.10 &euro;:</label>
-        <input type="number" min="0" name="count_0_10" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="0.05">
-        <label>0.05 &euro;:</label>
-        <input type="number" min="0" name="count_0_05" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
-      <div class="denom-row" data-denom="0.01">
-        <label>0.01 &euro;:</label>
-        <input type="number" min="0" name="count_0_01" value="0" class="count-input">
-        <input type="text" readonly class="line-value" value="&euro;0.00">
-      </div>
+      <fieldset>
+        <legend>Denomination Counts:</legend>
 
-    </fieldset>
-    <div id="grand-total">Grand Total: &euro;0.00</div><br>
-    <input type="hidden" name="total_cash" id="total_cash_input" value="0">
-    <fieldset style="margin-top:1em; border:1px solid #ccc; padding:1em;">
-    <legend>Personnel</legend>
-    <div>
-      <label style="display:inline-block;width:8em;">Counted By:</label>
-      <input type="text" name="counted_by" value="{{request.form.counted_by or ''}}">
-    </div>
-    <div>
-      <label style="display:inline-block;width:8em;">Checked By:</label>
-      <input type="text" name="checked_by" value="{{request.form.checked_by or ''}}">
-    </div>
-    <div>
-      <label style="display:inline-block;width:8em;">Carrier of Envelope:</label>
-      <input type="text" name="carrier_of_envelope" value="{{request.form.carrier_of_envelope or ''}}">
-    </div>
-  </fieldset>
-    <button type="submit" id="download-pdf">Save</button>
-  </form>
+        {% set z = '0' %}
+        <div class="denom-row" data-denom="100.00">
+          <label>100.00 &euro;:</label>
+          <input type="number" min="0" name="count_100_00" value="{{ (F.get('count_100_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="50.00">
+          <label>50.00 &euro;:</label>
+          <input type="number" min="0" name="count_50_00" value="{{ (F.get('count_50_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="20.00">
+          <label>20.00 &euro;:</label>
+          <input type="number" min="0" name="count_20_00" value="{{ (F.get('count_20_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="10.00">
+          <label>10.00 &euro;:</label>
+          <input type="number" min="0" name="count_10_00" value="{{ (F.get('count_10_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="5.00">
+          <label>5.00 &euro;:</label>
+          <input type="number" min="0" name="count_5_00" value="{{ (F.get('count_5_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="2.00">
+          <label>2.00 &euro;:</label>
+          <input type="number" min="0" name="count_2_00" value="{{ (F.get('count_2_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="1.00">
+          <label>1.00 &euro;:</label>
+          <input type="number" min="0" name="count_1_00" value="{{ (F.get('count_1_00') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="0.50">
+          <label>0.50 &euro;:</label>
+          <input type="number" min="0" name="count_0_50" value="{{ (F.get('count_0_50') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="0.20">
+          <label>0.20 &euro;:</label>
+          <input type="number" min="0" name="count_0_20" value="{{ (F.get('count_0_20') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="0.10">
+          <label>0.10 &euro;:</label>
+          <input type="number" min="0" name="count_0_10" value="{{ (F.get('count_0_10') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="0.05">
+          <label>0.05 &euro;:</label>
+          <input type="number" min="0" name="count_0_05" value="{{ (F.get('count_0_05') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+        <div class="denom-row" data-denom="0.01">
+          <label>0.01 &euro;:</label>
+          <input type="number" min="0" name="count_0_01" value="{{ (F.get('count_0_01') if F else z) or z }}" class="count-input">
+          <input type="text" readonly class="line-value" value="€0.00">
+        </div>
+      </fieldset>
+
+      <div id="grand-total">Grand Total: &euro;0.00</div>
+      <input type="hidden" name="total_cash" id="total_cash_input" value="{{ F.get('total_cash') if F else '0' }}">
+
+      <fieldset style="margin-top:1em; border:1px solid #ccc; padding:1em;">
+        <legend>Personnel</legend>
+        <div>
+          <label style="display:inline-block;width:8em;">Counted By:</label>
+          <input type="text" id="counted_by" name="counted_by" required
+                 value="{{ F.get('counted_by') if F else '' }}">
+        </div>
+        <div>
+          <label style="display:inline-block;width:8em;">Checked By:</label>
+          <input type="text" id="checked_by" name="checked_by" required
+                 value="{{ F.get('checked_by') if F else '' }}">
+        </div>
+        <div>
+          <label style="display:inline-block;width:8em;">Carrier of Envelope:</label>
+          <input type="text" id="carrier" name="carrier_of_envelope" required
+                 value="{{ F.get('carrier_of_envelope') if F else '' }}">
+        </div>
+      </fieldset>
+
+      <button type="submit" id="saveBtn">Save</button>
+    </form>
+  </div>
   <p><a href="/">← Back</a> | <a href="report.html">Report</a></p>
   <script>
-    const rows = document.querySelectorAll('.denom-row');
-    const grandEl = document.getElementById('grand-total');
-    function recalc() {
-      let grand = 0;
-      rows.forEach(row => {
-        const denom = parseFloat(row.dataset.denom);
-        const cnt = parseInt(row.querySelector('.count-input').value) || 0;
-        const line = denom * cnt;
-        grand += line;
-        // Use Unicode escape for euro symbol in JS
-        row.querySelector('.line-value').value = '€' + line.toFixed(2);
-      });
-      grandEl.textContent = 'Grand Total: €' + grand.toFixed(2);
-      // write into the hidden field
-      document.getElementById('total_cash_input').value = grand.toFixed(2);
-    }
-    rows.forEach(row => row.querySelector('.count-input').addEventListener('input', recalc));
-    recalc();
-  </script>
-<script>
-  // Helper to make a unique ID
-  function generateId() {
-    return 'OFF-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,5).toUpperCase();
+  // --- totals calc ---
+  function recalc() {
+    let grand = 0;
+    document.querySelectorAll('.denom-row').forEach(row => {
+      const denom = parseFloat(row.dataset.denom);
+      const input = row.querySelector('.count-input');
+      const count = parseInt(input.value || '0', 10) || 0;
+      const line  = denom * count;
+      row.querySelector('.line-value').value = new Intl.NumberFormat('en-IE',
+        { style:'currency', currency:'EUR' }).format(line);
+      grand += line;
+    });
+    document.getElementById('grand-total').textContent =
+      'Grand Total: ' + new Intl.NumberFormat('en-IE', { style:'currency', currency:'EUR' }).format(grand);
+    document.getElementById('total_cash_input').value = grand.toFixed(2);
   }
-
-  // Generate PDF and download locally
-  document.getElementById('download-pdf').addEventListener('click', () => {
-    const element = document.body; // or just form
-    const opt = {
-      margin:       0.5,
-      filename:     generateId() + '.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
+  document.addEventListener('input', e => {
+    if (e.target.classList.contains('count-input')) recalc();
   });
+  // recalc once to sync values from F (if any)
+  window.addEventListener('DOMContentLoaded', recalc);
 
-  // Generate PDF and send to server
-  document.getElementById('send-server').addEventListener('click', async () => {
-    const offeringId = generateId();
-    const element = document.body;
+  // --- validation + pdf + submit ---
+  document.getElementById('offering-form').addEventListener('submit', async (ev) => {
+    const dateEl = document.getElementById('off_date');
+    const counted = document.getElementById('counted_by').value.trim();
+    const checked = document.getElementById('checked_by').value.trim();
+    const carrier = document.getElementById('carrier').value.trim();
 
-    const pdfBlob = await html2pdf().from(element).outputPdf('blob');
-
-    const formData = new FormData();
-    formData.append('id', offeringId);
-    formData.append('pdf', pdfBlob, offeringId + ".pdf");
-
-    // Adjust URL to your server endpoint
-    const response = await fetch('/upload', {
-      method: 'POST',
-      body: formData
+    // at least one denomination?
+    let anyCount = false;
+    document.querySelectorAll('.count-input').forEach(el => {
+      const v = parseInt(el.value || '0', 10);
+      if (v > 0) anyCount = true;
     });
 
-    if (response.ok) {
-      alert("Sent to server with ID " + offeringId);
-    } else {
-      alert("Error sending to server");
+    if (!dateEl.value || !anyCount || !(counted && checked && carrier)) {
+      // Let Flask re-render with F=form so inputs stay filled
+      return; // do nothing; regular POST will return 400 + sticky form
+    }
+
+    // If valid: generate the PDF first, then submit normally
+    ev.preventDefault();
+    const filename = (() => {
+      const d = (dateEl.value || new Date().toISOString().slice(0,10)).replace(/-/g,'');
+      const rnd = Math.random().toString(36).slice(2,7).toUpperCase();
+      return `OFF-${d}-${rnd}.pdf`;
+    })();
+
+    await html2pdf()
+      .set({
+        margin: [10,10,10,10],
+        filename,
+        image: { type:'jpeg', quality:0.98 },
+        html2canvas: { scale:2, useCORS:true },
+        jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
+      })
+      .from(document.getElementById('offering-print'))
+      .save();
+
+    ev.target.submit(); // now let Flask handle the POST (success clears on redirect)
+  });
+  </script>
+
+<script>
+  document.querySelector('form').addEventListener('submit', function (ev) {
+    // require at least one denomination > 0
+    let anyPositive = false;
+    for (const el of this.elements) {
+      if (el.name && el.name.startsWith('count_')) {
+        const v = parseInt(el.value || '0', 10);
+        if (v > 0) { anyPositive = true; break; }
+      }
+    }
+    const missingPersonnel =
+      !document.getElementById('counted_by').value.trim() ||
+      !document.getElementById('checked_by').value.trim() ||
+      !document.getElementById('carrier').value.trim();
+
+    if (!anyPositive) {
+      ev.preventDefault();
+      alert('Please enter at least one denomination count greater than 0.');
+      return;
+    }
+    if (missingPersonnel) {
+      ev.preventDefault();
+      alert('Please fill Counted By, Checked By, and Carrier of Envelope.');
+      return;
     }
   });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form      = document.getElementById('offering-form');   // <form id="offering-form" ...>
+  const printArea = document.getElementById('offering-print');
+
+  const dateEl    = document.getElementById('off_date');        // <input name="date" id="off_date">
+  const countedEl = document.getElementById('counted_by');
+  const checkedEl = document.getElementById('checked_by');
+  const carrierEl = document.getElementById('carrier');
+
+  function anyDenomination() {
+    let sum = 0;
+    document.querySelectorAll('input[name^="count_"]').forEach(el => {
+      const n = parseInt(el.value || '0', 10);
+      if (!isNaN(n)) sum += n;
+    });
+    return sum > 0;
+  }
+
+  function personnelOk() {
+    return [countedEl, checkedEl, carrierEl].every(el => (el?.value || '').trim().length > 0);
+  }
+
+  function validate(showMsg=true) {
+    const hasDate = !!(dateEl && dateEl.value);
+    const hasCounts = anyDenomination();
+    const hasPeople = personnelOk();
+
+    if (showMsg) {
+      if (!hasDate)   { alert('Please select a date.'); return false; }
+      if (!hasCounts) { alert('Enter at least one denomination count > 0.'); return false; }
+      if (!hasPeople) { alert('Fill Counted By, Checked By, and Carrier of Envelope.'); return false; }
+    }
+    return hasDate && hasCounts && hasPeople;
+  }
+
+  function filename() {
+    const d = (dateEl?.value || new Date().toISOString().slice(0,10)).replace(/-/g,'');
+    const rnd = Math.random().toString(36).slice(2,7).toUpperCase();
+    return `OFF-${d}-${rnd}.pdf`;
+  }
+
+  const pdfOpts = fn => ({
+    margin: [10,10,10,10],
+    filename: fn,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  });
+
+  // Intercept the single Save submit
+  form?.addEventListener('submit', async (e) => {
+    if (!validate(true)) { e.preventDefault(); return; }
+    e.preventDefault();                        // wait for PDF to finish
+    await html2pdf().set(pdfOpts(filename())).from(printArea).save();
+    form.submit();                             // then continue normal submit (no duplicate handlers)
+  });
+});
 </script>
 </body>
 </html>

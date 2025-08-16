@@ -55,6 +55,7 @@
   </table>
 
   <!-- Nice optional extra: show a monthly breakdown if you enabled it in the route-->
+  {% if show_monthly and monthly %}
   <h3 style="margin-top:28px;">Monthly breakdown</h3>
   <table>
     <thead><tr><th>Month</th><th>Total (€)</th></tr></thead>
@@ -64,6 +65,7 @@
       {% endfor %}
     </tbody>
   </table>
+{% endif %}
 
 </body>
 </html>
