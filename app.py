@@ -11,7 +11,7 @@ import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
 from sqlalchemy import text
-from sqlalchemy.future import engine
+import sqlalchemy.future.engine as engine
 
 from models import db, Offering
 
@@ -342,58 +342,70 @@ def _load_categories():
     return [row[0] for row in res]
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
-    # values coming from the form
-    start_raw = request.args.get("start_date", "")
-    end_raw = request.args.get("end_date", "")
-    selected_category = request.args.get("category", "")
+    # Read current filters from the query string
+    start_raw = (request.args.get("start_date") or "").strip()
+    end_raw = (request.args.get("end_date") or "").strip()
+    sel_cat = (request.args.get("category") or "all categories").strip()
 
-    # Always load categories for the <select>
-    categories = _load_categories()
+    min_date, max_date = _tx_date_bounds()
 
-    # If dates aren’t selected yet, just render the page (empty table)
+    # First load (no dates): just render the form + empty table
     if not start_raw or not end_raw:
+        # Build a summary URL (empty until dates chosen)
+        summary_href = url_for("report_summary")
         return render_template(
             "report.html",
             rows=[],
             start_date=start_raw,
             end_date=end_raw,
-            categories=categories,
-            selected_category=selected_category,
-            view=request.args.get("view", "monthly"),
+            selected_category=sel_cat,
+            min_date=min_date,
+            max_date=max_date,
+            summary_href=summary_href,
         )
 
-    # Parse to actual dates
+    # Parse & validate
     start_dt = _parse_date(start_raw)
     end_dt = _parse_date(end_raw)
-    category = selected_category or None
+    if not start_dt or not end_dt:
+        flash("Please choose valid dates.", "error")
+        return redirect(url_for("reportfinance_view"))
 
-    # Strict date range + optional category (PostgreSQL)
-    sql = text("""
-               SELECT
-        date, subject, type_ofspending, category, amount, description
-    FROM transaction
-    WHERE date BETWEEN :start_dt AND :end_dt
-      AND (:category IS NULL OR category = :category)
-    ORDER BY date ASC
-""")
+    if start_dt > end_dt:
+        flash("End date must be on or after the start date.", "error")
+        return redirect(url_for("reportfinance_view",
+                                start_date=start_raw, end_date=end_raw, category=sel_cat))
 
+    # Normalize category: treat All as no filter
+    cat_param = None if sel_cat.lower() in ("", "all", "all categories") else sel_cat
 
-    with db.engine.begin() as conn:
-        result = conn.execute(sql, {
-            "start_dt": start_dt,
-            "end_dt": end_dt,
-            "category": category
-        })
-        rows = [dict(r._mapping) for r in result.fetchall()]
+    # Query rows
+    SQL = text("""
+               SELECT date, subject, type_ofspending, category, amount, description
+               FROM "transaction"
+               WHERE date BETWEEN :start_dt
+                 AND :end_dt
+                 AND (:cat IS NULL
+                  OR category = :cat)
+               ORDER BY date ASC
+               """)
+    rows = db.session.execute(SQL, {"start_dt": start_dt, "end_dt": end_dt, "cat": cat_param}).mappings().all()
+
+    # Build the Report summary URL with the exact same filters
+    qs = {"start": start_raw, "end": end_raw}
+    if cat_param:
+        qs["category"] = cat_param
+    summary_href = url_for("report_summary", **qs)
 
     return render_template(
         "report.html",
         rows=rows,
         start_date=start_raw,
         end_date=end_raw,
-        categories=categories,
-        selected_category=selected_category,
-        view=request.args.get("view", "monthly"),
+        selected_category=sel_cat,
+        min_date=min_date,
+        max_date=max_date,
+        summary_href=summary_href,
     )
 ''' 
 # --- Route: View Report ---

@@ -26,11 +26,11 @@
       style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;">
   <div>
     <label>Start date</label><br>
-    <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}">
+    <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}" required>
   </div>
   <div>
     <label>End date</label><br>
-    <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}">
+    <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}" required>
   </div>
   <div>
     <label for="category">Category</label><br>
@@ -59,7 +59,12 @@
     <button type="submit">Filter</button>
     <a href="{{ url_for('reportfinance_view') }}" style="margin-left:.5rem;">Clear</a>
   </div>
-   <button id="summaryBtn" type="button">Report summary</button>
+   <!-- Summary: same form, different action; still validated -->
+  <button type="submit"
+          formaction="/report-summary"
+          formmethod="get">
+    Report summary
+  </button>
 
 <script>
   document.getElementById('summaryBtn').addEventListener('click', function () {
@@ -95,7 +100,9 @@
   e.addEventListener('change', syncBounds);
   syncBounds();
 </script>
+
 </form>
+
 
     <table>
       <thead>
