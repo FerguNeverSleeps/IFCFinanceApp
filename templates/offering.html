@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Offering Entry</title>
@@ -111,7 +112,7 @@
       <input type="text" name="carrier_of_envelope" value="{{request.form.carrier_of_envelope or ''}}">
     </div>
   </fieldset>
-    <button type="submit">Save</button>
+    <button type="submit" id="download-pdf">Save</button>
   </form>
   <p><a href="/">← Back</a> | <a href="report.html">Report</a></p>
   <script>
@@ -134,5 +135,48 @@
     rows.forEach(row => row.querySelector('.count-input').addEventListener('input', recalc));
     recalc();
   </script>
+<script>
+  // Helper to make a unique ID
+  function generateId() {
+    return 'OFF-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,5).toUpperCase();
+  }
+
+  // Generate PDF and download locally
+  document.getElementById('download-pdf').addEventListener('click', () => {
+    const element = document.body; // or just form
+    const opt = {
+      margin:       0.5,
+      filename:     generateId() + '.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  });
+
+  // Generate PDF and send to server
+  document.getElementById('send-server').addEventListener('click', async () => {
+    const offeringId = generateId();
+    const element = document.body;
+
+    const pdfBlob = await html2pdf().from(element).outputPdf('blob');
+
+    const formData = new FormData();
+    formData.append('id', offeringId);
+    formData.append('pdf', pdfBlob, offeringId + ".pdf");
+
+    // Adjust URL to your server endpoint
+    const response = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      alert("Sent to server with ID " + offeringId);
+    } else {
+      alert("Error sending to server");
+    }
+  });
+</script>
 </body>
 </html>

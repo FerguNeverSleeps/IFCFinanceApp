@@ -20,11 +20,11 @@ import secrets
 
 
 # --- Flask App Configuration ---
-port_num = "12944"
+port_num = "5432"
 ngrok_num = "4"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -161,6 +161,16 @@ def cash_split_entry():
             checked_by=checked_by,
             carrier_of_envelope=carrier_of_envelope,
         )
+        #input into transaction table
+        tran = transaction1(
+            subject = "sunday offering",
+            date = date,
+            category = "offering",
+            amount = total_cash,
+            type_ofspending = "asset",
+            description = "sunday offering"
+        )
+        db.session.add(tran)
         db.session.add(offer)
         db.session.flush()  # assign cash_tx.id
 
@@ -561,7 +571,7 @@ def transaction_input():
             amount=total_cash,
             category=category,
             subject=subject,
-            created_at=tcreated,
+            description=tcreated,
             type_ofspending=tspending
         )
         db.session.add(offer)
