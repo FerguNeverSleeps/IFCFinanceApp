@@ -24,7 +24,7 @@ port_num = "12944"
 ngrok_num = "4"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@{ngrok_num}.tcp.ngrok.io:{port_num}/ICFfinance'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
