@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
-from sqlalchemy import text
+from sqlalchemy import text, create_engine
 
 from models import db, Offering
 
@@ -24,12 +24,57 @@ port_num = "5432"
 ngrok_num = "4"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://tavs:190501@localhost:5432/ICFfinance'
+engine = create_engine('postgresql://tavs:190501@localhost:5432/ICFfinance', future=True)
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 db = SQLAlchemy(app)
+
+AGG_SQL = text("""
+WITH categories AS (
+  SELECT DISTINCT "category" FROM "transaction"
+),
+tx AS (
+  SELECT
+    "category",
+    CASE WHEN lower("type_ofspending") = 'asset'
+         THEN "amount"::numeric ELSE 0::numeric END AS asset_amt,
+    CASE WHEN lower("type_ofspending") = 'liability'
+         THEN "amount"::numeric ELSE 0::numeric END AS liability_amt
+  FROM "transaction"
+  WHERE (:start_date IS NULL OR "date" >= :start_date)
+    AND (:end_date IS NULL OR "date" <= :end_date)
+)
+SELECT
+  c."category" AS category,
+  COALESCE(SUM(tx.asset_amt), 0)       AS assets,
+  COALESCE(SUM(tx.liability_amt), 0)   AS liabilities,
+  COALESCE(SUM(tx.asset_amt) - SUM(tx.liability_amt), 0) AS difference
+FROM categories c
+LEFT JOIN tx ON tx."category" = c."category"
+GROUP BY c."category"
+ORDER BY lower(c."category");
+""")
+
+# Grand totals
+TOTALS_SQL = text("""
+SELECT
+  COALESCE(SUM(CASE WHEN lower("type_ofspending")='asset'
+                    THEN "amount"::numeric ELSE 0::numeric END), 0) AS assets,
+  COALESCE(SUM(CASE WHEN lower("type_ofspending")='liability'
+                    THEN "amount"::numeric ELSE 0::numeric END), 0) AS liabilities,
+  COALESCE(
+    SUM(CASE WHEN lower("type_ofspending")='asset'
+             THEN "amount"::numeric ELSE 0::numeric END)
+    -
+    SUM(CASE WHEN lower("type_ofspending")='liability'
+             THEN "amount"::numeric ELSE 0::numeric END),
+  0) AS difference
+FROM "transaction"
+WHERE (:start_date IS NULL OR "date" >= :start_date)
+  AND (:end_date IS NULL OR "date" <= :end_date);
+""")
 
 def _parse_date(s):
     if not s:
@@ -70,6 +115,28 @@ with app.app_context():
 @app.route('/')
 def index():
     return render_template('index.html', current_year=date.today().year)
+@app.route("/finalreport.html", methods=["GET", "POST"])
+def category_report():
+    start_date = request.args.get("startdate") or None
+    end_date   = request.args.get("enddate") or None
+    params = {"start_date": start_date, "end_date": end_date}
+
+    with engine.begin() as conn:
+        rows = [dict(r) for r in conn.execute(AGG_SQL, params).mappings().all()]
+        totals = dict(conn.execute(TOTALS_SQL, params).mappings().first())
+
+    return render_template(
+        "finalreport.html",
+        title="Category Report (Assets vs Liabilities)",
+        rows=rows,
+        totals=totals,
+        start=start_date or "",
+        end=end_date or ""
+    )
+
+@app.route("/reset")
+def reset_filter():
+    return redirect(url_for("category_report"))
 
 @app.route('/manual-count')
 def manual_count():

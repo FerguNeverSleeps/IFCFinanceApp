@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ title }}</title>
+  <style>
+    body { font-family:sans-serif; background:#0b0c10; color:#eee; }
+    .wrap { max-width: 900px; margin: 40px auto; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:8px; border-bottom:1px solid #333; }
+    th { text-align:left; }
+    td.num { text-align:right; font-variant-numeric: tabular-nums; }
+    tfoot td { font-weight:bold; }
+    form { margin-bottom:16px; }
+  </style>
+</head>
+<body>
+<nav>
+    <a href="upload.html">Upload Excel</a>
+    <a href="offering.html">Record Offering</a>
+    <a href="/">Back Home</a>
+  </nav>
+<div class="wrap">
+  <h1>{{ title }}</h1>
+
+  <form method="get">
+    Start: <input type="date" name="startdate" id="startdate" value="{{ start }}">
+    End: <input type="date" name="enddate" id="enddate" value="{{ end }}">
+    <button type="submit">Filter</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>Category</th><th class="num">Assets</th><th class="num">Liabilities</th><th class="num">Difference</th></tr>
+    </thead>
+    <tbody>
+      {% macro euro(v) -%}€ {{ '{:,.2f}'.format(v) }}{%- endmacro %}
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.category }}</td>
+        <td class="num">{{ euro(row.assets) }}</td>
+        <td class="num">{{ euro(row.liabilities) }}</td>
+        <td class="num">{{ euro(row.difference) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Totals</td>
+        <td class="num">{{ euro(totals.assets) }}</td>
+        <td class="num">{{ euro(totals.liabilities) }}</td>
+        <td class="num">{{ euro(totals.difference) }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+</body>
+</html>
