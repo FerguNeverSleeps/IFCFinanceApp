@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+  <!-- html2pdf bundle already loaded -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>{{ title }}</title>
+  <style>
+    body { font-family:sans-serif; background:#0b0c10; color:#eee; }
+    nav a { color:#9dc1ff; margin-right:10px; text-decoration:none; }
+    .wrap { max-width: 900px; margin: 40px auto; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:8px; border-bottom:1px solid #333; }
+    th { text-align:left; }
+    td.num { text-align:right; font-variant-numeric: tabular-nums; }
+    tfoot td { font-weight:bold; }
+    form { margin-bottom:16px; }
+
+    /* The block exported to PDF — force white theme */
+    #pdf-area {
+      background:#ffffff; color:#111111;
+      padding:20px; border-radius:12px;
+    }
+    #pdf-area table thead th { border-bottom:2px solid #e6e6e6; }
+    #pdf-area table tbody td { border-bottom:1px solid #eeeeee; }
+    #pdf-area table tfoot td { border-top:2px solid #e6e6e6; }
+
+    .actions { display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+    .btn { padding:8px 12px; border:0; border-radius:8px; cursor:pointer; background:#2d6cdf; color:white; }
+    .btn.secondary { background:#333; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="upload.html">Upload Excel</a>
+    <a href="offering.html">Record Offering</a>
+    <a href="/">Back Home</a>
+  </nav>
+
+  <div class="wrap">
+
+    <div class="actions">
+      <form method="get">
+        Start: <input type="date" name="startdate" id="startdate" value="{{ start }}">
+        End:   <input type="date" name="enddate"   id="enddate"   value="{{ end }}">
+        <button type="submit" class="btn">Filter</button>
+      </form>
+      <!-- Download button (does not submit the filter form) -->
+      <button type="button" id="downloadPdf" class="btn">Download PDF</button>
+    </div>
+
+    <!-- Only this section is exported to PDF (white) -->
+    <section id="pdf-area">
+      <h1 style="margin:0 0 8px 0;">{{ title }}</h1>
+      <p style="margin:0 0 16px 0; color:#333;">
+        Period: <strong>{{ start or '—' }}</strong> to <strong>{{ end or '—' }}</strong>
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th class="num">Assets</th>
+            <th class="num">Liabilities</th>
+            <th class="num">Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% macro euro(v) -%}€ {{ '{:,.2f}'.format(v) }}{%- endmacro %}
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.category }}</td>
+            <td class="num">{{ euro(row.assets) }}</td>
+            <td class="num">{{ euro(row.liabilities) }}</td>
+            <td class="num">{{ euro(row.difference) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Totals</td>
+            <td class="num">{{ euro(totals.assets) }}</td>
+            <td class="num">{{ euro(totals.liabilities) }}</td>
+            <td class="num">{{ euro(totals.difference) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    // Downloads the white report area as a PDF
+    document.getElementById('downloadPdf').addEventListener('click', function () {
+      const el = document.getElementById('pdf-area');
+
+      // Use current start/end (Jinja values fall back to empty)
+      const start = document.getElementById('startdate')?.value || "{{ start or '' }}";
+      const end   = document.getElementById('enddate')?.value   || "{{ end or '' }}";
+      const fname = `category_report_${start || 'all'}_${end || 'all'}.pdf`;
+
+      const opt = {
+        margin:       10,                           // pt
+        filename:     fname,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, backgroundColor: '#ffffff' },
+        jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(el).save();
+    });
+  </script>
+</body>
+</html>
+
