@@ -11,7 +11,7 @@ import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
 from sqlalchemy import text
-import sqlalchemy.future.engine as engine
+
 
 from models import db, Offering
 
@@ -195,9 +195,13 @@ def category_report():
     end_date   = request.args.get("enddate") or None
     params = {"start_date": start_date, "end_date": end_date}
 
-    with engine.begin() as conn:
-        rows = [dict(r) for r in conn.execute(AGG_SQL, params).mappings().all()]
-        totals = dict(conn.execute(TOTALS_SQL, params).mappings().first())
+    # with engine.begin() as conn:
+    #     rows = [dict(r) for r in conn.execute(AGG_SQL, params).mappings().all()]
+    #     totals = dict(conn.execute(TOTALS_SQL, params).mappings().first())
+
+        # ---- OPTION A: simplest via session (no context manager needed)
+    rows = db.session.execute(AGG_SQL, params).mappings().all()
+    totals = db.session.execute(TOTALS_SQL, params).mappings().first() or {}
 
     return render_template(
         "finalreport.html",
