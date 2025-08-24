@@ -16,12 +16,19 @@
 <body>
   <a href="report.html">&larr; Back to report</a>
   <h1>Report summary</h1>
-
   <div class="filters">
-    <span class="pill">Start: {{ start or '—' }}</span>
-    <span class="pill">End: {{ end or '—' }}</span>
+    <span class="pill" id="start">Start: {{ start or '—' }}</span>
+    <span class="pill" id="end">End: {{ end or '—' }}</span>
     <span class="pill">Category: {{ category or 'All' }}</span>
   </div>
+  <script>
+    const startd = localStorage.getItem('start-date')
+    const endd = localStorage.getItem('end-date')
+
+    document.getElementById('start').textContent = startd
+    document.getElementById('end').textContent = endd
+
+  </script>
 
   <h3>Overall total</h3>
   <p style="font-size:1.25rem; font-weight:700;">€ {{ "{:,.2f}".format(total or 0) }}</p>

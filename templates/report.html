@@ -23,7 +23,7 @@
   <h2>Income Report</h2>
 
  <form method="get" action="{{ url_for('reportfinance_view') }}"
-      style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;">
+      style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;" id="form">
   <div>
     <label>Start date</label><br>
     <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}" required>
@@ -36,10 +36,6 @@
     <label for="category">Category</label><br>
     <select name="category" id="category" style="min-width:16rem;">
         <!-- Default -->
-    <option value="all categories"
-            {{ 'selected' if selected_category|lower in ('', 'all', 'all categories') else '' }}>
-      All categories
-    </option>
                 <option value="offering">Offering</option>
                 <option value="rent">Rent</option>
                 <option value="charity">Charity</option>
@@ -61,7 +57,7 @@
   </div>
    <!-- Summary: same form, different action; still validated -->
   <button type="submit"
-          formaction="/report-summary"
+          formaction="/reportsummary.html"
           formmethod="get">
     Report summary
   </button>

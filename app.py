@@ -576,38 +576,45 @@ def parse_excel(filepath, upload_id):
 
     return inserted
 
-@app.route('/report-summary', methods=['GET'])
+@app.route('/reportsummary.html', methods=['GET'])
 def report_summary():
-    # read query params
-    start_raw = request.args.get('start') or None
-    end_raw   = request.args.get('end') or None
-    category  = (request.args.get('category') or '').strip()
+    q = request.args
 
-    # normalize
-    start = _parse_date(start_raw)
-    end   = _parse_date(end_raw)
-    # treat "All categories" (or empty) as no filter
-    if category.lower() in ("", "all", "all categories"):
-        category = None
+    # read the form fields (accept both new and legacy names)
+    start_raw = (q.get('start_date') or q.get('start') or '').strip()
+    end_raw = (q.get('end_date') or q.get('end') or '').strip()
+    category_raw = (q.get('category') or '').strip()
 
-    where_sql, params = build_where_and_params(start, end, category)
+    # parse to dates if you have a helper; otherwise keep strings
+    start = _parse_date(start_raw) if start_raw else None
+    end = _parse_date(end_raw) if end_raw else None
 
-    # totals
+    # optional category
+    cat_is_filter = category_raw.lower() not in ('', 'all', 'all categories')
+
+    # params for both queries
+    params = {"start": start, "end": end}
+    if cat_is_filter:
+        params["category"] = category_raw
+
+    # --- SQL (DATE column; BETWEEN is inclusive) ---
+    cat_clause = " AND category = :category" if cat_is_filter else ""
+
     total_sql = text(f"""
-        SELECT COALESCE(SUM(amount), 0) AS total
-        FROM transaction
-        {where_sql}
-    """)
+            SELECT COALESCE(SUM(amount), 0) AS total
+            FROM transaction
+            WHERE date BETWEEN :start AND :end{cat_clause}
+        """)
 
     by_category_sql = text(f"""
-        SELECT category,
-               COALESCE(SUM(amount), 0) AS total,
-               COUNT(*) AS count
-        FROM transaction
-        {where_sql}
-        GROUP BY category
-        ORDER BY category
-    """)
+            SELECT COALESCE(category, '(Uncategorized)') AS category,
+                   COUNT(*) AS count,
+                   COALESCE(SUM(amount), 0) AS total
+            FROM transaction
+            WHERE date BETWEEN :start AND :end{cat_clause}
+            GROUP BY category
+            ORDER BY category
+        """)
 
     total = db.session.execute(total_sql, params).scalar() or 0
     by_category = db.session.execute(by_category_sql, params).mappings().all()
@@ -616,10 +623,11 @@ def report_summary():
         'reportsummary.html',
         total=total,
         by_category=by_category,
+        # pass raw values for display chips
         start=start_raw,
         end=end_raw,
-        category=(request.args.get('category') or '').strip()
-    )#--------------------
+        category=category_raw
+    )
 
 @app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():
