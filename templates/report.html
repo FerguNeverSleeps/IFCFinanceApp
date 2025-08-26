@@ -137,7 +137,7 @@ This is just to ensure that the selection stays selected so that the report summ
       <tbody>
         {% for r in rows %}
           <tr>
-            <td>{{ r.date.strftime('%d.%m.%Y') if r.date else '' }}</td>
+            <td>{{ r.date.strftime('%Y-%m-%d') if r.date else '' }}</td>
             <td>{{ r.subject }}</td>
             <td>{{ r.type_ofspending }}</td>
             <td>{{ r.category }}</td>
