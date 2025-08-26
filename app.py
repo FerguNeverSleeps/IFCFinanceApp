@@ -242,46 +242,46 @@ def file_upload():
     df.to_csv(filepath, index=False)
     return render_template('report.html', filename=filename)
 
-
-# --- Route: Upload Excel ---
-@app.route('/upload.html', methods=['GET', 'POST'])
-def upload_excel():
-    print(">>> ENTERED upload_excel, method=", request.method)
-    if request.method == 'POST':
-        # Retrieve uploaded file object
-        file = request.files.get('file')
-        if not file:
-            flash("No file selected", "danger")
-            return redirect(request.url)
-
-        # Secure filename and save locally
-        filename = secure_filename(file.filename)
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
-        # Record this upload in the DB
-        upload_entry = ExcelUpload(filename=filename)
-        db.session.add(upload_entry)
-        db.session.commit()
-
-        print(f"→ About to call parse_excel on {filepath!r}")
-        try:
-            # Parse Excel, insert Transaction rows
-            count = parse_excel(filepath, upload_entry.id)  # adds to session
-            upload_entry.parsed_success = True
-            db.session.commit()  # one commit for both upload row and transactions
-            flash("File uploaded and parsed successfully!", "success")
-        except Exception as e:
-            # Show any parsing errors
-            traceback.print_exc()
-            flash(f"Error during parsing: {e}", "danger")
-
-        return redirect(request.url)
-
-    # GET: render the upload form
-    # GET: render the upload form by calling the Flask view, not linking to a static file
-    return render_template('upload.html')
+#NOT IN USE
+# # --- Route: Upload Excel ---
+# @app.route('/upload.html', methods=['GET', 'POST'])
+# def upload_excel():
+#     print(">>> ENTERED upload_excel, method=", request.method)
+#     if request.method == 'POST':
+#         # Retrieve uploaded file object
+#         file = request.files.get('file')
+#         if not file:
+#             flash("No file selected", "danger")
+#             return redirect(request.url)
+#
+#         # Secure filename and save locally
+#         filename = secure_filename(file.filename)
+#         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#         file.save(filepath)
+#
+#         # Record this upload in the DB
+#         upload_entry = ExcelUpload(filename=filename)
+#         db.session.add(upload_entry)
+#         db.session.commit()
+#
+#         print(f"→ About to call parse_excel on {filepath!r}")
+#         try:
+#             # Parse Excel, insert Transaction rows
+#             count = parse_excel(filepath, upload_entry.id)  # adds to session
+#             upload_entry.parsed_success = True
+#             db.session.commit()  # one commit for both upload row and transactions
+#             flash("File uploaded and parsed successfully!", "success")
+#         except Exception as e:
+#             # Show any parsing errors
+#             traceback.print_exc()
+#             flash(f"Error during parsing: {e}", "danger")
+#
+#         return redirect(request.url)
+#
+#     # GET: render the upload form
+#     # GET: render the upload form by calling the Flask view, not linking to a static file
+#     return render_template('upload.html')
 
 # --- Route: Record Cash Split ---
 @app.route('/offering.html', methods=['GET', 'POST'])
@@ -346,6 +346,7 @@ def _load_categories():
     return [row[0] for row in res]
 @app.route('/report.html', methods=['GET'])
 def reportfinance_view():
+
     # Read current filters from the query string
     start_raw = (request.args.get("start_date") or "").strip()
     end_raw = (request.args.get("end_date") or "").strip()
