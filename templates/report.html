@@ -85,28 +85,28 @@ This is just to ensure that the selection stays selected so that the report summ
     Report summary
   </button>
 
-<script>
-  document.getElementById('summaryBtn').addEventListener('click', function () {
-    const qs = new URLSearchParams(window.location.search);
+<!--<script>-->
+<!--  document.getElementById('summaryBtn').addEventListener('click', function () {-->
+<!--    const qs = new URLSearchParams(window.location.search);-->
 
-    // Map list-page names to summary-page names if needed
-    if (qs.has('start_date')) { qs.set('start', qs.get('start_date')); qs.delete('start_date'); }
-    if (qs.has('end_date'))   { qs.set('end',   qs.get('end_date'));   qs.delete('end_date'); }
+<!--    // Map list-page names to summary-page names if needed-->
+<!--    if (qs.has('start_date')) { qs.set('start', qs.get('start_date')); qs.delete('start_date'); }-->
+<!--    if (qs.has('end_date'))   { qs.set('end',   qs.get('end_date'));   qs.delete('end_date'); }-->
 
-    // Trim empties
-    for (const [k,v] of [...qs]) if (!v) qs.delete(k);
+<!--    // Trim empties-->
+<!--    for (const [k,v] of [...qs]) if (!v) qs.delete(k);-->
 
-    // If no query yet (first load), fall back to form values
-    if ([...qs.keys()].length === 0) {
-      const form = document.getElementById('filterForm');
-      const fromForm = new URLSearchParams(new FormData(form));
-      for (const [k,v] of fromForm) if (v) qs.set(k, v);
-      if (qs.get('category') === 'all') qs.delete('category');
-    }
+<!--    // If no query yet (first load), fall back to form values-->
+<!--    if ([...qs.keys()].length === 0) {-->
+<!--      const form = document.getElementById('filterForm');-->
+<!--      const fromForm = new URLSearchParams(new FormData(form));-->
+<!--      for (const [k,v] of fromForm) if (v) qs.set(k, v);-->
+<!--      if (qs.get('category') === 'all') qs.delete('category');-->
+<!--    }-->
 
-    window.location.href = '/report-summary?' + qs.toString();
-  });
-</script>
+<!--    window.location.href = '/report-summary?' + qs.toString();-->
+<!--  });-->
+<!--</script>-->
  <script>
   // keep end >= start and start <= end in the UI
   const s = document.getElementById('start_date');
