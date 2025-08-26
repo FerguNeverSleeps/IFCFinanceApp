@@ -22,6 +22,7 @@
   </nav>
   <h2>Income Report</h2>
 
+   {% set sel = (selected_category or '')|lower %}
  <form method="get" action="{{ url_for('reportfinance_view') }}"
       style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;" id="form">
   <div>
@@ -36,19 +37,41 @@
     <label for="category">Category</label><br>
     <select name="category" id="category" style="min-width:16rem;">
         <!-- Default -->
-                <option value="offering">Offering</option>
-                <option value="rent">Rent</option>
-                <option value="charity">Charity</option>
-                <option value="GIVT">GIVT</option>
-                <option value="food/beverages">Food/Beverages</option>
-                <option value="tithe/rabo">Tithe/Rabo</option>
-                <option value="preacher">Preacher</option>
-                <option value="events">events</option>
-                <option value="attributes-church">attributes-church</option>
-                <option value="sunday-school">sunday-school</option>
-                <option value="account-spar">account-spar</option>
-                <option value="others">others</option>
-                <option value="all categories">all categories</option>
+<!--                <option value="offering">Offering</option>-->
+<!--                <option value="rent">Rent</option>-->
+<!--                <option value="charity">Charity</option>-->
+<!--                <option value="GIVT">GIVT</option>-->
+<!--                <option value="food/beverages">Food/Beverages</option>-->
+<!--                <option value="tithe/rabo">Tithe/Rabo</option>-->
+<!--                <option value="preacher">Preacher</option>-->
+<!--                <option value="events">events</option>-->
+<!--                <option value="attributes-church">attributes-church</option>-->
+<!--                <option value="sunday-school">sunday-school</option>-->
+<!--                <option value="account-spar">account-spar</option>-->
+<!--                <option value="others">others</option>-->
+<!--                <option value="all categories" >all categories</option>-->
+        <!-- All categories at the top -->
+        <option value="all categories"
+          {% if sel in ('', 'all', 'all categories') %}selected{% endif %}>
+          All categories
+        </option>
+
+        <!-- Your fixed set of categories with selection persistence -->
+<!--        Don't worry about the errors because the html works perfectly with this.
+This is just to ensure that the selection stays selected so that the report summary works-->
+        <option value="offering"          {% if sel == 'offering' %}selected{% endif %}>Offering</option>
+        <option value="rent"              {% if sel == 'rent' %}selected{% endif %}>Rent</option>
+        <option value="charity"           {% if sel == 'charity' %}selected{% endif %}>Charity</option>
+        <option value="GIVT"              {% if sel == 'givt' %}selected{% endif %}>GIVT</option>
+        <option value="food/beverages"    {% if sel == 'food/beverages' %}selected{% endif %}>Food/Beverages</option>
+        <option value="tithe/rabo"        {% if sel == 'tithe/rabo' %}selected{% endif %}>Tithe/Rabo</option>
+        <option value="preacher"          {% if sel == 'preacher' %}selected{% endif %}>Preacher</option>
+        <option value="events"            {% if sel == 'events' %}selected{% endif %}>events</option>
+        <option value="attributes-church" {% if sel == 'attributes-church' %}selected{% endif %}>attributes-church</option>
+        <option value="sunday-school"     {% if sel == 'sunday-school' %}selected{% endif %}>sunday-school</option>
+        <option value="account-spar"      {% if sel == 'account-spar' %}selected{% endif %}>account-spar</option>
+        <option value="others"            {% if sel == 'others' %}selected{% endif %}>others</option>
+      </select>
     </select>
   </div>
   <div>

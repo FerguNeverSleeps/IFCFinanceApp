@@ -351,6 +351,9 @@ def reportfinance_view():
     end_raw = (request.args.get("end_date") or "").strip()
     sel_cat = (request.args.get("category") or "all categories").strip()
 
+    # load categories for the dropdown
+    categories = _load_categories()
+
     min_date, max_date = _tx_date_bounds()
 
     # First load (no dates): just render the form + empty table
@@ -363,6 +366,7 @@ def reportfinance_view():
             start_date=start_raw,
             end_date=end_raw,
             selected_category=sel_cat,
+            categories=categories,
             min_date=min_date,
             max_date=max_date,
             summary_href=summary_href,
