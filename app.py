@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
-from sqlalchemy import text, select, func
+from sqlalchemy import text, select, func, bindparam, types as satypes
 from functools import wraps
 from models import db, Offering
 from werkzeug.utils import secure_filename
@@ -671,29 +671,71 @@ def report_summary():
         end=end_raw,
         category=category_raw
     )
+def _to_date(x):
+    if isinstance(x, date) and not isinstance(x, datetime): return x
+    if isinstance(x, datetime): return x.date()
+    if isinstance(x, str) and x.strip():
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d.%m.%Y", "%Y/%m/%d"):
+            try: return datetime.strptime(x.strip(), fmt).date()
+            except ValueError: pass
+    return None
 
+def _to_iso(x):
+    d = _to_date(x)
+    return d.isoformat() if d else ""
 @app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():
-    sql = text("""
-               SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope,
-                   deposit_status,deposit_date
-               FROM offerings
-               ORDER BY date DESC
-""")
-    # query from the Offering table (or Transaction if you kept it there)
-    # Run the query
-    result = db.session.execute(sql)
+    start_raw = (request.args.get("start_date") or "").strip()
+    end_raw = (request.args.get("end_date") or "").strip()
 
-    # Convert rows to plain dicts in a version-safe way
-    offers = []
-    for row in result:
-        # SQLAlchemy 1.4/2.0: row._mapping is a Mapping
-        if hasattr(row, "_mapping"):
-            offers.append(dict(row._mapping))
-        else:
-            # Older versions: RowProxy is already dict-able
-            offers.append(dict(row))
-    return render_template('offeringsview.html', offers=offers)
+    # Convert to real date objects (or None)
+    sd = datetime.strptime(start_raw, "%Y-%m-%d").date() if start_raw else None
+    ed = datetime.strptime(end_raw, "%Y-%m-%d").date() if end_raw else None
+
+    SQL = text("""
+      SELECT id, date, total_amount, counted_by, checked_by,
+             carrier_of_envelope, deposit_status, deposit_date
+      FROM offerings
+      WHERE (:sd IS NULL OR (date)::date >= :sd)
+        AND (:ed IS NULL OR (date)::date <= :ed)
+      ORDER BY (date)::date DESC
+    """).bindparams(
+        bindparam("sd", type_=satypes.Date()),
+        bindparam("ed", type_=satypes.Date()),
+    )
+
+    rows = db.session.execute(SQL, {"sd": sd, "ed": ed}).mappings().all()
+
+    # Values to refill the inputs
+    start_out = sd.isoformat() if sd else ""
+    end_out = ed.isoformat() if ed else ""
+
+    return render_template(
+        "offeringsview.html",
+        offers=rows,
+        start_date=start_out,
+        end_date=end_out,
+    )
+#     sql = text("""
+#                SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope,
+#                    deposit_status,deposit_date
+#                FROM offerings
+#                ORDER BY date DESC
+# """)
+#     # query from the Offering table (or Transaction if you kept it there)
+#     # Run the query
+#     result = db.session.execute(sql)
+#
+#     # Convert rows to plain dicts in a version-safe way
+#     offers = []
+#     for row in result:
+#         # SQLAlchemy 1.4/2.0: row._mapping is a Mapping
+#         if hasattr(row, "_mapping"):
+#             offers.append(dict(row._mapping))
+#         else:
+#             # Older versions: RowProxy is already dict-able
+#             offers.append(dict(row))
+#     return render_template('offeringsview.html', offers=offers)
 
 @app.route('/offeringedit.html', methods=['GET','POST'])
 def edit_offering():
