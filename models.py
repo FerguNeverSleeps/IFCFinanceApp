@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-
+from sqlalchemy import select, func
+import hmac
 # Initialize SQLAlchemy ORM
 db = SQLAlchemy()
 
@@ -65,3 +67,30 @@ class transaction1(db.Model):
     amount = db.Column(db.Float, nullable=False)
     type_ofspending = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255),nullable=False)
+
+class User(db.Model):
+    __tablename__ = "users"  # avoid "user" (reserved in some DBs)
+
+    id            = db.Column(db.Integer, primary_key=True)
+    username      = db.Column(db.String(80),  unique=True, index=True, nullable=False)
+    email         = db.Column(db.String(120), unique=True, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    is_active     = db.Column(db.Boolean, default=True,  nullable=False)
+    is_admin      = db.Column(db.Boolean, default=False, nullable=False)
+    created_at    = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    updated_at    = db.Column(db.DateTime, nullable=False,server_default=db.func.now(), onupdate=db.func.now())
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        ph = self.password_hash or ""
+        # If it's a real hash, verify with Werkzeug
+        if ph.startswith(("pbkdf2:", "scrypt:", "argon2:", "bcrypt")):
+            return check_password_hash(ph, password)
+        # Legacy fallback: stored as plaintext (temporary)
+        return hmac.compare_digest(ph, password)
+
+    def __repr__(self) -> str:
+        return f"<User {self.username}>"
+
