@@ -3,7 +3,7 @@ import os
 import traceback
 from decimal import Decimal
 from urllib.parse import urlencode
-
+import hmac
 import pandas
 from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort,session,g
 from flask_sqlalchemy import SQLAlchemy
@@ -16,8 +16,8 @@ from models import db, Offering
 from werkzeug.utils import secure_filename
 from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1,db, User
 import secrets
-
-
+from werkzeug.security import check_password_hash
+HASH_PREFIXES = ("pbkdf2:", "scrypt:", "argon2", "bcrypt")
 
 # --- Flask App Configuration ---
 port_num = "5432"
@@ -206,22 +206,44 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
+        next_url = request.form.get("next") or request.args.get("next")
 
+        if not username or not password:
+            return render_template("login.html", error="Username and password are required.")
+
+        # Case-insensitive username lookup (no Model.query)
         stmt = select(User).where(func.lower(User.username) == username.lower())
         user = db.session.execute(stmt).scalar_one_or_none()
 
-        if user and user.is_active and user.check_password(password):
-            session.clear()
-            session["user_id"] = user.id
-            return redirect(request.args.get("next") or url_for("index"))
+        if not user or not user.is_active:
+            return render_template("login.html", error="Invalid username or password.")
 
-        error = "Invalid username or password."
+        ph = user.password_hash or ""
+
+        # If already hashed, verify normally
+        if ph.startswith(HASH_PREFIXES):
+            ok = check_password_hash(ph, password)
+        else:
+            # Legacy plaintext: constant-time compare, then upgrade to a hash
+            ok = hmac.compare_digest(ph, password)
+            if ok:
+                user.set_password(password)  # hashes and stores
+                db.session.commit()
+
+        if not ok:
+            return render_template("login.html", error="Invalid username or password.")
+
+        session.clear()
+        session["user_id"] = user.id
+        return redirect(next_url or url_for("index"))
+
     return render_template("login.html", error=error)
 
 @app.route("/index.html", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 
 @app.route("/")
 @login_required
