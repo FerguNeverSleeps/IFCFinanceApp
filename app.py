@@ -5,19 +5,16 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 import pandas
-from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort,session,g
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
-from sqlalchemy import text
-
-
+from sqlalchemy import text, select, func
+from functools import wraps
 from models import db, Offering
-
 from werkzeug.utils import secure_filename
-
-from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1
+from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1,db, User
 import secrets
 
 
@@ -32,6 +29,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlma
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 AGG_SQL = text("""
 WITH categories AS (
@@ -121,7 +119,12 @@ FROM "transaction"
 WHERE (:start_date IS NULL OR "date" >= :start_date)
   AND (:end_date IS NULL OR "date" <= :end_date);
 """)
-
+@app.after_request
+def disable_client_cache(resp):
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 def _parse_date(s):
     """Return a date object from several common formats, else None."""
     if not s:
@@ -181,14 +184,49 @@ class GivtUpload(db.Model):
     filename     = db.Column(db.String(256), nullable=False)
     uploaded_at  = db.Column(db.DateTime, server_default=db.func.now())
 
-# Create DB
-with app.app_context():
-    db.create_all()
+# ---- helpers ----
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
 
-# Routes
-@app.route('/')
+@app.before_request
+def load_user():
+    uid = session.get("user_id")
+    # no Model.query here either
+    g.user = db.session.get(User, uid) if uid else None
+
+# ---- routes ----
+@app.route("/login.html", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        stmt = select(User).where(func.lower(User.username) == username.lower())
+        user = db.session.execute(stmt).scalar_one_or_none()
+
+        if user and user.is_active and user.check_password(password):
+            session.clear()
+            session["user_id"] = user.id
+            return redirect(request.args.get("next") or url_for("index"))
+
+        error = "Invalid username or password."
+    return render_template("login.html", error=error)
+
+@app.route("/index.html", methods=["POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/")
+@login_required
 def index():
-    return render_template('index.html', current_year=date.today().year)
+  return render_template('index.html', current_year=date.today().year)
 @app.route("/finalreport.html", methods=["GET", "POST"])
 def category_report():
     start_date = request.args.get("startdate") or None
@@ -757,4 +795,7 @@ def transaction_input():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(host="0.0.0.0",debug=True)
+

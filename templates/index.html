@@ -21,5 +21,20 @@
   <a href="transactions.html">
     <button>register financial information</button>
   </a>
+  <nav>
+  <span>Hi, {{ g.user.username }}</span>
+  <form action="{{ url_for('logout') }}" method="post" style="display:inline">
+    <button type="submit">Log out</button>
+  </form>
+</nav>
+
+<script>
+  // If user hits Back and the page is restored from bfcache, force revalidation
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted || (performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
+      window.location.reload();
+    }
+  });
+</script>
   </body>
 </html>
