@@ -3,21 +3,21 @@ import os
 import traceback
 from decimal import Decimal
 from urllib.parse import urlencode
-import hmac
+
 import pandas
 from flask import Flask, render_template, request, redirect, url_for, make_response, flash, abort,session,g
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd, io, csv
 from datetime import date, datetime
 import openpyxl
-from sqlalchemy import text, select, func
+from sqlalchemy import text, select, func, bindparam, types as satypes
 from functools import wraps
 from models import db, Offering
 from werkzeug.utils import secure_filename
 from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1,db, User
 import secrets
-from werkzeug.security import check_password_hash
-HASH_PREFIXES = ("pbkdf2:", "scrypt:", "argon2", "bcrypt")
+
+
 
 # --- Flask App Configuration ---
 port_num = "5432"
@@ -206,44 +206,22 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        next_url = request.form.get("next") or request.args.get("next")
 
-        if not username or not password:
-            return render_template("login.html", error="Username and password are required.")
-
-        # Case-insensitive username lookup (no Model.query)
         stmt = select(User).where(func.lower(User.username) == username.lower())
         user = db.session.execute(stmt).scalar_one_or_none()
 
-        if not user or not user.is_active:
-            return render_template("login.html", error="Invalid username or password.")
+        if user and user.is_active and user.check_password(password):
+            session.clear()
+            session["user_id"] = user.id
+            return redirect(request.args.get("next") or url_for("index"))
 
-        ph = user.password_hash or ""
-
-        # If already hashed, verify normally
-        if ph.startswith(HASH_PREFIXES):
-            ok = check_password_hash(ph, password)
-        else:
-            # Legacy plaintext: constant-time compare, then upgrade to a hash
-            ok = hmac.compare_digest(ph, password)
-            if ok:
-                user.set_password(password)  # hashes and stores
-                db.session.commit()
-
-        if not ok:
-            return render_template("login.html", error="Invalid username or password.")
-
-        session.clear()
-        session["user_id"] = user.id
-        return redirect(next_url or url_for("index"))
-
+        error = "Invalid username or password."
     return render_template("login.html", error=error)
 
 @app.route("/index.html", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("login"))
-
 
 @app.route("/")
 @login_required
@@ -693,29 +671,71 @@ def report_summary():
         end=end_raw,
         category=category_raw
     )
+def _to_date(x):
+    if isinstance(x, date) and not isinstance(x, datetime): return x
+    if isinstance(x, datetime): return x.date()
+    if isinstance(x, str) and x.strip():
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d.%m.%Y", "%Y/%m/%d"):
+            try: return datetime.strptime(x.strip(), fmt).date()
+            except ValueError: pass
+    return None
 
+def _to_iso(x):
+    d = _to_date(x)
+    return d.isoformat() if d else ""
 @app.route('/offeringsview.html', methods=['GET'])
 def offerings_list():
-    sql = text("""
-               SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope,
-                   deposit_status,deposit_date
-               FROM offerings
-               ORDER BY date DESC
-""")
-    # query from the Offering table (or Transaction if you kept it there)
-    # Run the query
-    result = db.session.execute(sql)
+    start_raw = (request.args.get("start_date") or "").strip()
+    end_raw = (request.args.get("end_date") or "").strip()
 
-    # Convert rows to plain dicts in a version-safe way
-    offers = []
-    for row in result:
-        # SQLAlchemy 1.4/2.0: row._mapping is a Mapping
-        if hasattr(row, "_mapping"):
-            offers.append(dict(row._mapping))
-        else:
-            # Older versions: RowProxy is already dict-able
-            offers.append(dict(row))
-    return render_template('offeringsview.html', offers=offers)
+    # Convert to real date objects (or None)
+    sd = datetime.strptime(start_raw, "%Y-%m-%d").date() if start_raw else None
+    ed = datetime.strptime(end_raw, "%Y-%m-%d").date() if end_raw else None
+
+    SQL = text("""
+      SELECT id, date, total_amount, counted_by, checked_by,
+             carrier_of_envelope, deposit_status, deposit_date
+      FROM offerings
+      WHERE (:sd IS NULL OR (date)::date >= :sd)
+        AND (:ed IS NULL OR (date)::date <= :ed)
+      ORDER BY (date)::date DESC
+    """).bindparams(
+        bindparam("sd", type_=satypes.Date()),
+        bindparam("ed", type_=satypes.Date()),
+    )
+
+    rows = db.session.execute(SQL, {"sd": sd, "ed": ed}).mappings().all()
+
+    # Values to refill the inputs
+    start_out = sd.isoformat() if sd else ""
+    end_out = ed.isoformat() if ed else ""
+
+    return render_template(
+        "offeringsview.html",
+        offers=rows,
+        start_date=start_out,
+        end_date=end_out,
+    )
+#     sql = text("""
+#                SELECT id, date, total_amount, counted_by, checked_by, carrier_of_envelope,
+#                    deposit_status,deposit_date
+#                FROM offerings
+#                ORDER BY date DESC
+# """)
+#     # query from the Offering table (or Transaction if you kept it there)
+#     # Run the query
+#     result = db.session.execute(sql)
+#
+#     # Convert rows to plain dicts in a version-safe way
+#     offers = []
+#     for row in result:
+#         # SQLAlchemy 1.4/2.0: row._mapping is a Mapping
+#         if hasattr(row, "_mapping"):
+#             offers.append(dict(row._mapping))
+#         else:
+#             # Older versions: RowProxy is already dict-able
+#             offers.append(dict(row))
+#     return render_template('offeringsview.html', offers=offers)
 
 @app.route('/offeringedit.html', methods=['GET','POST'])
 def edit_offering():

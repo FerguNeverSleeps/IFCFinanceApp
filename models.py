@@ -84,17 +84,13 @@ class User(db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
-            return check_password_hash(self.password_hash, password)
-
-    def __repr__(self) -> str:
-        return f"<User {self.username}>"
-'''
-    def check_password(self, password: str) -> bool:
         ph = self.password_hash or ""
         # If it's a real hash, verify with Werkzeug
         if ph.startswith(("pbkdf2:", "scrypt:", "argon2:", "bcrypt")):
             return check_password_hash(ph, password)
         # Legacy fallback: stored as plaintext (temporary)
         return hmac.compare_digest(ph, password)
-'''
+
+    def __repr__(self) -> str:
+        return f"<User {self.username}>"
 

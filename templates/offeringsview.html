@@ -75,43 +75,54 @@
 
   <!-- New date‐range filter -->
 <form method="get" id="month-year-filter" style="margin:1em 0;">
-  <label>
-    Month:
-    <select name="month">
-      <option value="">All</option>
-      {% for num, name in [
-           (1,'January'),(2,'February'),(3,'March'),
-           (4,'April'),  (5,'May'),     (6,'June'),
-           (7,'July'),   (8,'August'),  (9,'September'),
-           (10,'October'),(11,'November'),(12,'December')
-      ] %}
-        <option value="{{num}}"
-                {% if num==selected_month %}selected{% endif %}>
-          {{name}}
-        </option>
-      {% endfor %}
-    </select>
-  </label>
+  <!-- Same filter layout as the Income Report -->
+  <form method="get" action="{{ url_for('offerings_list') }}" id="ofilters">
+    <input type="date" name="start_date" id="start"
+       value="{{ start_date }}"
+       {% if min_date %}min="{{ min_date }}"{% endif %}
+       {% if end_date %}max="{{ end_date }}"{% elif max_date %}max="{{ max_date }}"{% endif %}>
 
-  <label style="margin-left:1em;">
-    Year:
-    <select name="year">
-      <option value="">All</option>
-      {% for y in year_options %}
-        <option value="{{y}}"
-                {% if y==selected_year %}selected{% endif %}>
-          {{y}}
-        </option>
-      {% endfor %}
-    </select>
-  </label>
+<input type="date" name="end_date" id="end"
+       value="{{ end_date }}"
+       {% if start_date %}min="{{ start_date }}"{% elif min_date %}min="{{ min_date }}"{% endif %}
+       {% if max_date %}max="{{ max_date }}"{% endif %}>
 
-  <form method="get" id="view-toggle">
-    <label><input type="radio" name="view" value="daily"> Daily</label>
-    <label><input type="radio" name="view" value="monthly"> Monthly</label>
-    <label><input type="radio" name="view" value="yearly"> Yearly</label>
-    <button type="submit">Refresh</button>
-  </form>
+    <div>
+      <button type="submit">Filter</button>
+      <a href="{{ url_for('offerings_list') }}" style="margin-left:.5rem;">Clear</a>
+    </div>
+</form>
+
+<script>
+  // When month/year changes, snap calendars to that month/year
+  const mSel = document.getElementById('month');
+  const ySel = document.getElementById('year');
+  const sInp = document.getElementById('start_date');
+  const eInp = document.getElementById('end_date');
+
+  function setRangeFromMonthYear(){
+    const m = mSel.value;     // "01".."12" or ""
+    const y = ySel.value;     // "2025" or ""
+    if (!m && !y) return;     // nothing selected
+
+    const today = new Date();
+    const year  = y ? parseInt(y, 10) : today.getFullYear();
+
+    if (m) {
+      const month = parseInt(m, 10);
+      const last = new Date(year, month, 0).getDate(); // days in month
+      sInp.value = `${year}-${m}-01`;
+      eInp.value = `${year}-${m}-${String(last).padStart(2,'0')}`;
+    } else {
+      // year only
+      sInp.value = `${year}-01-01`;
+      eInp.value = `${year}-12-31`;
+    }
+  }
+
+  mSel.addEventListener('change', setRangeFromMonthYear);
+  ySel.addEventListener('change', setRangeFromMonthYear);
+</script>
 
   <table>
     <thead>
