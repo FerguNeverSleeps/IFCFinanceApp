@@ -154,12 +154,36 @@ def _is_all_category(val: str) -> bool:
     return (val or "").strip().lower() in ("", "all", "all categories")
 
 def _tx_date_bounds():
-    row = db.session.execute(text('SELECT MIN(date) AS mind, MAX(date) AS maxd FROM "transaction";')).mappings().one()
-    # return ISO strings (empty if None)
-    return (
-        row['mind'].isoformat() if row['mind'] else "",
-        row['maxd'].isoformat() if row['maxd'] else ""
-    )
+    """
+        Return ISO strings for the minimum and maximum *finite* dates
+        from the "transaction" table. If none exist, return empty strings.
+        Casting to text avoids psycopg2 converting 'infinity'/-'infinity'.
+        """
+    row = db.session.execute(text("""
+            SELECT
+                MIN(CASE WHEN isfinite("date") THEN "date" END)::text AS mind,
+                MAX(CASE WHEN isfinite("date") THEN "date" END)::text AS maxd
+            FROM "transaction"
+            WHERE "date" IS NOT NULL
+        """)).mappings().first()
+
+    def _iso_or_empty(s: str | None) -> str:
+        if not s:
+            return ""
+        try:
+            # s will be 'YYYY-MM-DD' from Postgres ::text cast
+            return date.fromisoformat(s).isoformat()
+        except Exception:
+            # anything weird -> treat as no bound
+            return ""
+
+    return _iso_or_empty(row["mind"]), _iso_or_empty(row["maxd"])
+    # row = db.session.execute(text('SELECT MIN(date) AS mind, MAX(date) AS maxd FROM "transaction";')).mappings().one()
+    # # return ISO strings (empty if None)
+    # return (
+    #     row['mind'].isoformat() if row['mind'] else "",
+    #     row['maxd'].isoformat() if row['maxd'] else ""
+    # )
 
 def build_where_and_params(start, end, category):
     clauses = []
