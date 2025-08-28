@@ -326,7 +326,7 @@ def file_upload():
 def cash_split_entry():
     if request.method == 'POST':
         date = request.form['date']  # service date
-        total_cash = float(request.form['total_cash'] or 0)
+        total_cash = float(request.form['total_cash_input'] or 0)
 
         db.session.flush()  # assign temporary IDs to splits
 
