@@ -17,9 +17,12 @@
   <a href="report.html">&larr; Back to report</a>
   <h1>Report summary</h1>
   <div class="filters">
-    <span class="pill" id="start">Start: {{ start or '—' }}</span>
-    <span class="pill" id="end">End: {{ end or '—' }}</span>
-    <span class="pill">Category: {{ category or 'All' }}</span>
+<!--    <span class="pill" id="start">Start: {{ start or '—' }}</span>-->
+<!--    <span class="pill" id="end">End: {{ end or '—' }}</span>-->
+<!--    <span class="pill">Category: {{ category or 'All' }}</span>-->
+    {% if start %}<span class="pill">Start: {{ start }}</span>{% endif %}
+  {% if end %}<span class="pill">End: {{ end }}</span>{% endif %}
+  <span class="pill">Category: {{ category or 'all categories' }}</span>
   </div>
   <script>
     const startd = localStorage.getItem('start-date')
