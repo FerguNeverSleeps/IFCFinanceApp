@@ -13,6 +13,7 @@ import openpyxl
 from sqlalchemy import text, select, func, bindparam, types as satypes
 from functools import wraps
 from models import db, Offering
+from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1,db, User
 import secrets
@@ -24,13 +25,18 @@ port_num = "5432"
 ngrok_num = "4"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
+# Use environment variable for DB URI, fallback to local docker instance
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL', 
+    'postgresql://postgres:password@localhost:5440/ifcfinance'
+)
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+db.init_app(app)
+migrate = Migrate(app, db)
 AGG_SQL = text("""
 WITH categories AS (
   SELECT DISTINCT "category" FROM "transaction"
