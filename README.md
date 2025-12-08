@@ -11,7 +11,7 @@
     It is recommended to use a virtual environment to manage dependencies.
     ```bash
     python3 -m venv .ifc-venv
-    source venv/bin/activate
+    source .ifc-venv/bin/activate
     ```
 
 2.  **Clone the repository**:
