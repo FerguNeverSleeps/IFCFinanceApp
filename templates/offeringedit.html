@@ -1,25 +1,36 @@
-<!doctype html>
-<html>
-  <head><title>Edit Offering</title></head>
-  <body>
-    <h2>Edit Offering on {{ offer.date }}</h2>
-    <form method="post">
-      <div>
-        <label>
-          <input type="checkbox" name="deposit_status"
-                 {% if offer.deposit_status %} checked{% endif %}>
-          Deposited to Bank
-        </label>
+{% extends "base.html" %}
+
+{% block title %}Edit Offering - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Edit Offering</h2>
+    <a href="{{ url_for('offerings_list') }}" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div class="card">
+    <p style="margin-bottom: 1.5rem; color: var(--color-text-muted);">
+      Offering recorded on <strong>{{ offer.date }}</strong>
+    </p>
+
+    <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <input type="checkbox" name="deposit_status" id="deposit_status" {% if offer.deposit_status %} checked{% endif
+          %} style="width: 1.25rem; height: 1.25rem; accent-color: var(--color-primary);">
+        <label for="deposit_status" style="font-weight: 500;">Deposited to Bank</label>
       </div>
+
       <div>
-        <label>
-          Deposit Date:
-          <input type="date" name="deposit_date"
-                 value="{{ offer.deposit_date or '' }}">
-        </label>
+        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Deposit Date</label>
+        <input type="date" name="deposit_date" value="{{ offer.deposit_date or '' }}"
+          style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem;">
       </div>
-      <button type="submit">Save</button>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Save Changes</button>
     </form>
-    <p><a href="offeringsview.html">← Back to Offerings</a></p>
-  </body>
-</html>
+  </div>
+</div>
+{% endblock %}

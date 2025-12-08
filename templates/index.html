@@ -1,40 +1,56 @@
-<!doctype html>
-<html>
-  <head><title>Finance App</title>
-  </head>
-  <body>
-    <h1>Welcome to Finance App</h1>
+{% extends "base.html" %}
 
-    <a href="offering.html">
-      <button>Count Offering Money</button>
-    </a>
- <a href="finalreport.html">
-      <button>Final report</button>
-    </a>
+{% block title %}Dashboard - IFC Finance{% endblock %}
 
-    <a href="offeringsview.html">
-    <button>Offering View Table</button>
-    </a>
-  <a href="report.html">
-    <button>Report of Total offering income</button>
-  </a>
-  <a href="transactions.html">
-    <button>register financial information</button>
-  </a>
-  <nav>
-  <span>Hi, {{ g.user.username }}</span>
-  <form action="{{ url_for('logout') }}" method="post" style="display:inline">
-    <button type="submit">Log out</button>
-  </form>
-</nav>
+{% block content %}
+<div class="dashboard-grid">
 
-<script>
-  // If user hits Back and the page is restored from bfcache, force revalidation
-  window.addEventListener('pageshow', function (e) {
-    if (e.persisted || (performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
-      window.location.reload();
-    }
-  });
-</script>
-  </body>
-</html>
+    <!-- Verse of the Day Section -->
+    <div class="verse-card card">
+        <p class="verse-text">"{{ verse.text }}"</p>
+        <p class="verse-ref">- {{ verse.ref }}</p>
+    </div>
+
+    <!-- Main Actions Grid -->
+    <section class="action-grid">
+        
+        <a href="{{ url_for('cash_split_entry') }}" class="card action-card">
+            <div class="action-icon">🪙</div>
+            <h3 class="action-title">Count Offering</h3>
+            <p class="action-desc">Record Sunday service inputs</p>
+        </a>
+
+        <a href="{{ url_for('report') }}" class="card action-card">
+            <div class="action-icon">📊</div>
+            <h3 class="action-title">Reports</h3>
+            <p class="action-desc">View monthly and yearly summaries</p>
+        </a>
+
+        <a href="{{ url_for('offerings_list') }}" class="card action-card">
+            <div class="action-icon">📋</div>
+            <h3 class="action-title">View Offerings</h3>
+            <p class="action-desc">See history of all recorded offerings</p>
+        </a>
+
+        <a href="{{ url_for('file_upload') }}" class="card action-card">
+            <div class="action-icon">☁️</div>
+            <h3 class="action-title">Import Data</h3>
+            <p class="action-desc">Upload Excel files or Givt CSVs</p>
+        </a>
+
+        <a href="{{ url_for('transaction_input') }}" class="card action-card">
+            <div class="action-icon">📝</div>
+            <h3 class="action-title">Transactions</h3>
+            <p class="action-desc">Register other financial inputs</p>
+        </a>
+
+         <a href="{{ url_for('category_report') }}" class="card action-card">
+            <div class="action-icon">📈</div>
+            <h3 class="action-title">Final Report</h3>
+            <p class="action-desc">Assets vs Liabilities</p>
+        </a>
+
+
+    </section>
+</div>
+{% endblock %}

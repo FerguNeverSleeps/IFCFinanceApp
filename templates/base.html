@@ -1,34 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Offering Counter{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IFC Finance{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header>
         <div class="container header-flex">
-            <img src="{{ url_for('static', filename='icf_logo.png') }}" alt="ICF Enschede Logo" class="logo">
-            <h1>Offering Counter</h1>
+            <a href="{{ url_for('index') }}" class="logo-section">
+                <img src="{{ url_for('static', filename='assets/img/icf_logo.jpeg') }}" alt="ICF Logo" class="logo">
+                <span style="font-size: 1.5rem; font-weight: 600;">Finance</span>
+            </a>
+
+            <div class="user-controls">
+                {% if g.user %}
+                <span>Welcome, {{ g.user.username }}</span>
+                <form action="{{ url_for('logout') }}" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Log
+                        out</button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Log In</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <nav class="container">
-        <ul class="nav-list">
-            <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('manual_count') }}">Manual Count</a></li>
-            <li><a href="{{ url_for('import_givt') }}">Import Givt CSV</a></li>
-            <li><a href="{{ url_for('report') }}">Monthly Report</a></li>
-        </ul>
-    </nav>
-
     <main class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 
     <footer class="container">
-        <p>© {{ current_year }} ICF Enschede</p>
+        <p>© {{ current_year }} ICF Enschede - Finance Application</p>
     </footer>
 </body>
+
 </html>

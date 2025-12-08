@@ -1,39 +1,67 @@
-<html>
-    <body>
-    <nav>
-    <a href="offering.html">Record Offering</a>
-    <a href="/">Back Home</a>
-  </nav>
-        <h1>Register Income or Spendings!</h1>
-        <form method="post">
-            <label>Date: <input type="date" name="tdate" required></label><br>
-            <label>Please input the subject(such as donation or buying something from a company such as mediamarkt):</label>
-            <input type="text" name="tsubject" id="tsubject" required><br>
-            <label for="tcategory">Please input the category(such as rent, donations, etc...):</label>
-            <select name="tcategory" id="tcategory">
-                <option value="rent">Rent</option>
-                <option value="charity">Charity</option>
-                <option value="GIVT">GIVT</option>
-                <option value="food/beverages">Food/Beverages</option>
-                <option value="tithe/rabo">Tithe/Rabo</option>
-                <option value="preacher">Preacher</option>
-                <option value="events">events</option>
-                <option value="attributes-church">attributes-church</option>
-                <option value="sunday-school">sunday-school</option>
-                <option value="account-spar">account-spar</option>
-                <option value="others">others</option>
-            </select><br>
-            <label for="tspending">Please input the type of spending(liability or asset):</label>
-            <select name="tspending" id="tspending">
-                <option value="asset">Asset</option>
-                <option value="liability">Liability</option>
+{% extends "base.html" %}
 
-            </select><br>
-             <label>Please input the total amount:</label>
-            <input type="number" step="any" id="tamount" name="tamount"><br>
-            <label>Please give a small description clarifying the purpose of the spending:</label>
-            <input type="text" id="tcreated_at" name="tcreated_at"><br>
-            <input type="submit" value="Submit">
+{% block title %}Transactions - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px;">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Register Transaction</h2>
+        <a href="{{ url_for('index') }}" class="btn btn-outline">← Back</a>
+    </div>
+
+    <div class="card">
+        <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Date</label>
+                <input type="date" name="tdate" required
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Subject</label>
+                <input type="text" name="tsubject" required placeholder="e.g. MediaMarkt purchase"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Category</label>
+                    <select name="tcategory"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem;">
+                        <option value="rent">Rent</option>
+                        <option value="charity">Charity</option>
+                        <option value="events">Events</option>
+                        <option value="admin">Admin</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Type</label>
+                    <select name="tspending"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem;">
+                        <option value="liability">Liability (Spending)</option>
+                        <option value="asset">Asset (Income)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Total Amount (€)</label>
+                <input type="number" step="0.01" name="tamount" required
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem; font-size: 1.2rem;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Description</label>
+                <textarea name="tcreated_at" placeholder="Additional details..."
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.5rem; min-height: 80px;"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Record</button>
         </form>
-    </body>
-</html>
+    </div>
+</div>
+{% endblock %}

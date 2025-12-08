@@ -229,6 +229,21 @@ def load_user():
     # no Model.query here either
     g.user = db.session.get(User, uid) if uid else None
 
+@app.context_processor
+def inject_global_vars():
+    import random
+    verses = [
+        {"text": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.", "ref": "John 3:16"},
+        {"text": "Trust in the LORD with all your heart and lean not on your own understanding.", "ref": "Proverbs 3:5"},
+        {"text": "The LORD is my shepherd, I lack nothing.", "ref": "Psalm 23:1"},
+        {"text": "I can do all this through him who gives me strength.", "ref": "Philippians 4:13"},
+        {"text": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness.", "ref": "Galatians 5:22"},
+    ]
+    return dict(
+        current_year=date.today().year,
+        verse=random.choice(verses)
+    )
+
 # ---- routes ----
 @app.route("/login.html", methods=["GET", "POST"])
 def login():

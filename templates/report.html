@@ -1,134 +1,70 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Income Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    h2 { margin-bottom: 1em; }
-    form { margin-bottom: 1em; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: right; }
-    th:first-child, td:first-child { text-align: left; }
-    nav a { margin-right: 1em; text-decoration: none; color: #007BFF; }
-    nav a:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-  <nav>
-    <a href="offering.html">Record Offering</a>
-    <a href="/">Back Home</a>
-  </nav>
-  <h2>Income Report</h2>
+{% extends "base.html" %}
 
-   {% set sel = (selected_category or '')|lower %}
- <form method="get" action="{{ url_for('reportfinance_view') }}"
-      style="display:flex; gap:1rem; flex-wrap:wrap; align-items:end; margin-bottom:1rem;" id="form">
-  <div>
-    <label>Start date</label><br>
-    <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}" required>
+{% block title %}Income Report - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container margin-top-lg">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Income Report</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">← Back to Dashboard</a>
   </div>
-  <div>
-    <label>End date</label><br>
-    <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}" required>
+
+  <!-- Filters Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="get" action="{{ url_for('reportfinance_view') }}"
+      style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end;">
+
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Start Date</label>
+        <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}" required
+          style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.3rem;">
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">End Date</label>
+        <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}" required
+          style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.3rem;">
+      </div>
+
+      <div style="flex: 1; min-width: 200px;">
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">Category</label>
+        <select name="category"
+          style="width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.3rem;">
+          {% set sel = (selected_category or '')|lower %}
+          <option value="all categories" {% if sel in ('', 'all' , 'all categories' ) %}selected{% endif %}>All
+            Categories</option>
+          <option value="offering" {% if sel=='offering' %}selected{% endif %}>Offering</option>
+          <option value="rent" {% if sel=='rent' %}selected{% endif %}>Rent</option>
+          <option value="charity" {% if sel=='charity' %}selected{% endif %}>Charity</option>
+          <option value="givt" {% if sel=='givt' %}selected{% endif %}>GIVT</option>
+          <option value="food/beverages" {% if sel=='food/beverages' %}selected{% endif %}>Food/Beverages</option>
+          <option value="tithe/rabo" {% if sel=='tithe/rabo' %}selected{% endif %}>Tithe/Rabo</option>
+          <option value="preacher" {% if sel=='preacher' %}selected{% endif %}>Preacher</option>
+          <option value="events" {% if sel=='events' %}selected{% endif %}>Events</option>
+          <option value="others" {% if sel=='others' %}selected{% endif %}>Others</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('reportfinance_view') }}" class="btn btn-outline">Clear</a>
+      </div>
+
+      <button type="submit" formaction="/reportsummary.html" formmethod="get" class="btn btn-outline"
+        style="margin-left: auto;">
+        View Summary
+      </button>
+    </form>
   </div>
-  <div>
-    <label for="category">Category</label><br>
-    <select name="category" id="category" style="min-width:16rem;">
-        <!-- Default -->
-<!--                <option value="offering">Offering</option>-->
-<!--                <option value="rent">Rent</option>-->
-<!--                <option value="charity">Charity</option>-->
-<!--                <option value="GIVT">GIVT</option>-->
-<!--                <option value="food/beverages">Food/Beverages</option>-->
-<!--                <option value="tithe/rabo">Tithe/Rabo</option>-->
-<!--                <option value="preacher">Preacher</option>-->
-<!--                <option value="events">events</option>-->
-<!--                <option value="attributes-church">attributes-church</option>-->
-<!--                <option value="sunday-school">sunday-school</option>-->
-<!--                <option value="account-spar">account-spar</option>-->
-<!--                <option value="others">others</option>-->
-<!--                <option value="all categories" >all categories</option>-->
-        <!-- All categories at the top -->
-        <option value="all categories"
-          {% if sel in ('', 'all', 'all categories') %}selected{% endif %}>
-          All categories
-        </option>
 
-        <!-- Your fixed set of categories with selection persistence -->
-<!--        Don't worry about the errors because the html works perfectly with this.
-This is just to ensure that the selection stays selected so that the report summary works-->
-        <option value="offering"          {% if sel == 'offering' %}selected{% endif %}>Offering</option>
-        <option value="rent"              {% if sel == 'rent' %}selected{% endif %}>Rent</option>
-        <option value="charity"           {% if sel == 'charity' %}selected{% endif %}>Charity</option>
-        <option value="GIVT"              {% if sel == 'givt' %}selected{% endif %}>GIVT</option>
-        <option value="food/beverages"    {% if sel == 'food/beverages' %}selected{% endif %}>Food/Beverages</option>
-        <option value="tithe/rabo"        {% if sel == 'tithe/rabo' %}selected{% endif %}>Tithe/Rabo</option>
-        <option value="preacher"          {% if sel == 'preacher' %}selected{% endif %}>Preacher</option>
-        <option value="events"            {% if sel == 'events' %}selected{% endif %}>events</option>
-        <option value="attributes-church" {% if sel == 'attributes-church' %}selected{% endif %}>attributes-church</option>
-        <option value="sunday-school"     {% if sel == 'sunday-school' %}selected{% endif %}>sunday-school</option>
-        <option value="account-spar"      {% if sel == 'account-spar' %}selected{% endif %}>account-spar</option>
-        <option value="others"            {% if sel == 'others' %}selected{% endif %}>others</option>
-      </select>
-    </select>
-  </div>
-  <div>
-    <button type="submit">Filter</button>
-    <a href="{{ url_for('reportfinance_view') }}" style="margin-left:.5rem;">Clear</a>
-  </div>
-   <!-- Summary: same form, different action; still validated -->
-  <button type="submit"
-          formaction="/reportsummary.html"
-          formmethod="get">
-    Report summary
-  </button>
-
-<!--<script>-->
-<!--  document.getElementById('summaryBtn').addEventListener('click', function () {-->
-<!--    const qs = new URLSearchParams(window.location.search);-->
-
-<!--    // Map list-page names to summary-page names if needed-->
-<!--    if (qs.has('start_date')) { qs.set('start', qs.get('start_date')); qs.delete('start_date'); }-->
-<!--    if (qs.has('end_date'))   { qs.set('end',   qs.get('end_date'));   qs.delete('end_date'); }-->
-
-<!--    // Trim empties-->
-<!--    for (const [k,v] of [...qs]) if (!v) qs.delete(k);-->
-
-<!--    // If no query yet (first load), fall back to form values-->
-<!--    if ([...qs.keys()].length === 0) {-->
-<!--      const form = document.getElementById('filterForm');-->
-<!--      const fromForm = new URLSearchParams(new FormData(form));-->
-<!--      for (const [k,v] of fromForm) if (v) qs.set(k, v);-->
-<!--      if (qs.get('category') === 'all') qs.delete('category');-->
-<!--    }-->
-
-<!--    window.location.href = '/report-summary?' + qs.toString();-->
-<!--  });-->
-<!--</script>-->
- <script>
-  // keep end >= start and start <= end in the UI
-  const s = document.getElementById('start_date');
-  const e = document.getElementById('end_date');
-  function syncBounds(){
-    if (s.value) e.min = s.value; else e.min = "{{ min_date }}";
-    if (e.value) s.max = e.value; else s.max = "{{ max_date }}";
-  }
-  s.addEventListener('change', syncBounds);
-  e.addEventListener('change', syncBounds);
-  syncBounds();
-</script>
-
-</form>
-
-
-    <table>
+  <!-- Results Table -->
+  <div class="table-container">
+    <table class="table">
       <thead>
         <tr>
           <th>Date</th>
           <th>Subject</th>
-          <th>Type of Spending</th>
+          <th>Type</th>
           <th>Category</th>
           <th>Amount (€)</th>
           <th>Description</th>
@@ -136,18 +72,36 @@ This is just to ensure that the selection stays selected so that the report summ
       </thead>
       <tbody>
         {% for r in rows %}
-          <tr>
-            <td>{{ r.date.strftime('%Y-%m-%d') if r.date else '' }}</td>
-            <td>{{ r.subject }}</td>
-            <td>{{ r.type_ofspending }}</td>
-            <td>{{ r.category }}</td>
-            <td class="amount">{{ '%.2f'|format(r.amount or 0) }}</td>
-            <td>{{ r.description }}</td>
-          </tr>
+        <tr>
+          <td>{{ r.date.strftime('%Y-%m-%d') if r.date else '' }}</td>
+          <td>{{ r.subject }}</td>
+          <td><span style="text-transform: capitalize;">{{ r.type_ofspending }}</span></td>
+          <td><span style="background: #e5e7eb; padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.85rem;">{{
+              r.category }}</span></td>
+          <td style="font-family: monospace; font-size: 1rem; font-weight: 600;">
+            {{ '%.2f'|format(r.amount or 0) }}
+          </td>
+          <td style="color: var(--color-text-muted);">{{ r.description }}</td>
+        </tr>
         {% else %}
-          <tr><td colspan="6" class="muted">No data for the selected filters.</td></tr>
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">No data found for
+            the selected filters.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
-  </body>
-</html>
+  </div>
+</div>
+
+<script>
+  const s = document.getElementById('start_date');
+  const e = document.getElementById('end_date');
+  function syncBounds() {
+    if (s.value) e.min = s.value;
+    if (e.value) s.max = e.value;
+  }
+  s.addEventListener('change', syncBounds);
+  e.addEventListener('change', syncBounds);
+</script>
+{% endblock %}

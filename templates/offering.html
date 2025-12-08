@@ -1,206 +1,137 @@
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offering Entry</title>
-  <style>
-    fieldset { border: 1px solid #ccc; padding: 1em; }
-    .denom-row { display: flex; align-items: center; margin-bottom: 0.5em; }
-    .denom-row label { width: 6em; }
-    .denom-row input[type="number"] { width: 4em; margin-right: 1em; }
-    .denom-row .line-value { width: 6em; text-align: right; border: none; background: none; font-weight: bold; }
-    #grand-total { margin-top: 1em; font-size: 1.5em; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h2>Record Offering</h2>
-  <!-- Flash messages -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul>
-      {% for cat,msg in messages %}
-        <li class="{{cat}}">{{msg}}</li>
-      {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+{% extends "base.html" %}
 
-  <!-- Everything inside #offering-print is what goes into the PDF -->
-  <div id="offering-print">
+{% block title %}Record Offering - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Record Sunday Offering</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">← Back to Dashboard</a>
+  </div>
+
+  <!-- Flash messages are handled in base.html now -->
+
+  <div class="card">
     <form id="offering-form" method="post" action="{{ url_for('cash_split_entry') }}">
-      <label>Date:
+
+      <div style="margin-bottom: 2rem;">
+        <label style="font-weight: 600;">Date:</label>
         <input type="date" name="date" id="off_date" required
-               value="{{ F.get('date') if F else '' }}">
-      </label>
-      <br><br>
+          style="padding: 0.5rem; border-radius: 0.3rem; border: 1px solid #ccc; margin-left: 1rem;"
+          value="{{ F.get('date') if F else '' }}">
+      </div>
 
-      <fieldset>
-        <legend>Denomination Counts:</legend>
+      <fieldset
+        style="border: 1px solid var(--color-border); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem;">
+        <legend style="padding: 0 0.5rem; font-weight: 600; color: var(--color-primary);">Denomination Counts</legend>
 
-        {% set z = '0' %}
-        <div class="denom-row" data-denom="100.00">
-          <label>100.00 &euro;:</label>
-          <input type="number" min="0" name="count_100_00" value="{{ (F.get('count_100_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="50.00">
-          <label>50.00 &euro;:</label>
-          <input type="number" min="0" name="count_50_00" value="{{ (F.get('count_50_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="20.00">
-          <label>20.00 &euro;:</label>
-          <input type="number" min="0" name="count_20_00" value="{{ (F.get('count_20_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="10.00">
-          <label>10.00 &euro;:</label>
-          <input type="number" min="0" name="count_10_00" value="{{ (F.get('count_10_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="5.00">
-          <label>5.00 &euro;:</label>
-          <input type="number" min="0" name="count_5_00" value="{{ (F.get('count_5_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="2.00">
-          <label>2.00 &euro;:</label>
-          <input type="number" min="0" name="count_2_00" value="{{ (F.get('count_2_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="1.00">
-          <label>1.00 &euro;:</label>
-          <input type="number" min="0" name="count_1_00" value="{{ (F.get('count_1_00') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="0.50">
-          <label>0.50 &euro;:</label>
-          <input type="number" min="0" name="count_0_50" value="{{ (F.get('count_0_50') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="0.20">
-          <label>0.20 &euro;:</label>
-          <input type="number" min="0" name="count_0_20" value="{{ (F.get('count_0_20') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="0.10">
-          <label>0.10 &euro;:</label>
-          <input type="number" min="0" name="count_0_10" value="{{ (F.get('count_0_10') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="0.05">
-          <label>0.05 &euro;:</label>
-          <input type="number" min="0" name="count_0_05" value="{{ (F.get('count_0_05') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
-        </div>
-        <div class="denom-row" data-denom="0.01">
-          <label>0.01 &euro;:</label>
-          <input type="number" min="0" name="count_0_01" value="{{ (F.get('count_0_01') if F else z) or z }}" class="count-input">
-          <input type="text" readonly class="line-value" value="€0.00">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+          {% set denoms = ['100.00', '50.00', '20.00', '10.00', '5.00', '2.00', '1.00', '0.50', '0.20', '0.10', '0.05',
+          '0.01'] %}
+          {% for d in denoms %}
+          <div class="denom-row" data-denom="{{ d }}"
+            style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; padding: 0.5rem; border-radius: 0.5rem;">
+            <label style="width: 4rem;">€{{ d }}:</label>
+            <input type="number" min="0" name="count_{{ d.replace('.','_') }}"
+              value="{{ (F.get('count_' + d.replace('.','_')) if F else '0') or '0' }}" class="count-input"
+              style="width: 4rem; padding: 0.25rem; text-align: center;">
+            <input type="text" readonly class="line-value" value="€0.00"
+              style="width: 5rem; text-align: right; border: none; background: transparent; font-weight: 600; color: var(--color-primary);">
+          </div>
+          {% endfor %}
         </div>
       </fieldset>
 
-      <div id="grand-total">Grand Total: &euro;0.00</div>
-      <input type="hidden" name="total_cash_input" id="total_cash_input" value="{{ F.get('total_cash') if F else '0' }}">
+      <div id="grand-total"
+        style="text-align: right; font-size: 1.5rem; font-weight: 700; color: var(--color-primary-dark); margin-bottom: 2rem;">
+        Grand Total: €0.00
+      </div>
+      <input type="hidden" name="total_cash_input" id="total_cash_input"
+        value="{{ F.get('total_cash') if F else '0' }}">
 
-      <fieldset style="margin-top:1em; border:1px solid #ccc; padding:1em;">
-        <legend>Personnel</legend>
-        <div>
-          <label style="display:inline-block;width:8em;">Counted By:</label>
-          <input type="text" id="counted_by" name="counted_by" required
-                 value="{{ F.get('counted_by') if F else '' }}">
-        </div>
-        <div>
-          <label style="display:inline-block;width:8em;">Checked By:</label>
-          <input type="text" id="checked_by" name="checked_by" required
-                 value="{{ F.get('checked_by') if F else '' }}">
-        </div>
-        <div>
-          <label style="display:inline-block;width:8em;">Carrier of Envelope:</label>
-          <input type="text" id="carrier" name="carrier_of_envelope" required
-                 value="{{ F.get('carrier_of_envelope') if F else '' }}">
+      <fieldset
+        style="border: 1px solid var(--color-border); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem;">
+        <legend style="padding: 0 0.5rem; font-weight: 600; color: var(--color-primary);">Personnel</legend>
+        <div style="display: grid; gap: 1rem;">
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label style="width: 150px;">Counted By:</label>
+            <input type="text" name="counted_by" required
+              style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.3rem;"
+              value="{{ F.get('counted_by') if F else '' }}">
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label style="width: 150px;">Checked By:</label>
+            <input type="text" name="checked_by" required
+              style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.3rem;"
+              value="{{ F.get('checked_by') if F else '' }}">
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label style="width: 150px;">Envelope Carrier:</label>
+            <input type="text" name="carrier_of_envelope" required
+              style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.3rem;"
+              value="{{ F.get('carrier_of_envelope') if F else '' }}">
+          </div>
         </div>
       </fieldset>
 
-      <button type="submit" id="saveBtn">Save</button>
-      <button type="button" id="savePdfBtn">Save in PDF</button>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" id="savePdfBtn" class="btn btn-outline">📄 Save as PDF</button>
+        <button type="submit" id="saveBtn" class="btn btn-primary">💾 Save Record</button>
+      </div>
     </form>
   </div>
-  <p><a href="/">← Back</a> | <a href="report.html">Report</a></p>
- <script>
+</div>
+
+<!-- Print Area Hidden Logic: We reuse the script but maybe hide this div or style it for print -->
+<div id="offering-print" style="display:none;">
+  <!-- Minimal clone for PDF generation if needed, or we adapt the script to capture the main form -->
+  <!-- For simplicity, let's keep the script logic looking at 'offering-form' or adapt the print area to be the card itself -->
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
   function formatEUR(cents) {
-    return new Intl.NumberFormat('en-IE', {style:'currency', currency:'EUR'})
-      .format(cents / 100);
+    return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
   }
 
   function recalc() {
     let grandCents = 0;
-
     document.querySelectorAll('.denom-row').forEach(row => {
-      // Convert denomination string → integer cents
-      const denomStr = row.dataset.denom;            // e.g. "0.50", "10.00"
+      const denomStr = row.dataset.denom;
       const denomCents = Math.round(Number(denomStr) * 100);
-
       const input = row.querySelector('.count-input');
       const count = parseInt(input.value || '0', 10) || 0;
-
       const lineCents = denomCents * count;
       row.querySelector('.line-value').value = formatEUR(lineCents);
-
       grandCents += lineCents;
     });
-
-    document.getElementById('grand-total').textContent =
-      'Grand Total: ' + formatEUR(grandCents);
-
-    // keep the hidden field as a 2-decimal string for the backend
+    document.getElementById('grand-total').textContent = 'Grand Total: ' + formatEUR(grandCents);
     document.getElementById('total_cash_input').value = (grandCents / 100).toFixed(2);
   }
 
-  // keep your existing listeners
   document.addEventListener('input', e => {
     if (e.target.classList.contains('count-input')) recalc();
   });
   window.addEventListener('DOMContentLoaded', recalc);
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('offering-form');
-  const pdfBtn = document.getElementById('savePdfBtn');
-  const printArea = document.getElementById('offering-print');
 
-  if (!form || !pdfBtn || !printArea) return;
+  // PDF Logic
+  document.getElementById('savePdfBtn').addEventListener('click', async () => {
+    recalc();
+    const element = document.querySelector('.card'); // Capture the whole card
+    const d = (document.getElementById('off_date')?.value || new Date().toISOString().slice(0, 10)).replace(/-/g, '');
+    const filename = `OFF-${d}.pdf`;
 
-  pdfBtn.addEventListener('click', async () => {
-    // keep totals/hidden field in sync (uses your integer-cents recalc)
-    try { if (typeof recalc === 'function') recalc(); } catch (_) {}
+    await html2pdf().set({
+      margin: 10,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(element).save();
 
-    // build filename like OFF-YYYYMMDD-ABCDE.pdf
-    const d = (document.getElementById('off_date')?.value || new Date().toISOString().slice(0,10)).replace(/-/g,'');
-    const rnd = Math.random().toString(36).slice(2,7).toUpperCase();
-    const filename = `OFF-${d}-${rnd}.pdf`;
-
-    try {
-      await html2pdf()
-        .set({
-          margin: [10,10,10,10],
-          filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        })
-        .from(printArea)
-        .save();
-    } catch (err) {
-      console.warn('PDF generation failed; submitting anyway.', err);
-    } finally {
-      // Submit straight to backend (bypasses other submit listeners)
-      HTMLFormElement.prototype.submit.call(form);
-    }
+    // Submit form after minimal delay
+    setTimeout(() => document.getElementById('offering-form').submit(), 1000);
   });
-});
 </script>
-</body>
-</html>
+{% endblock %}
