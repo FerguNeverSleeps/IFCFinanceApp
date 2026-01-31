@@ -26,10 +26,8 @@ ngrok_num = "4"
 
 app = Flask(__name__)
 # Use environment variable for DB URI, fallback to local docker instance
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL', 
-    'postgresql://postgres:password@localhost:5440/ifcfinance'
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
+
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
