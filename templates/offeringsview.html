@@ -1,161 +1,73 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cash Offerings</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-    }
-    nav {
-      margin-bottom: 1rem;
-    }
-    nav a {
-      margin-right: 1.5rem;
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    form#view-toggle {
-      margin: 1rem 0;
-    }
-    form#view-toggle label {
-      margin-right: 1rem;
-      cursor: pointer;
-    }
-    form#view-toggle button {
-      margin-left: 1rem;
-      padding: 0.3rem 0.8rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.5rem;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.6rem 0.8rem;
-      text-align: center;
-    }
-    th {
-      background-color: #f5f5f5;
-      font-weight: bold;
-    }
-    td:first-child, th:first-child {
-      text-align: left;
-    }
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-    .edit-link {
-      color: #007bff;
-      text-decoration: none;
-    }
-    .edit-link:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-  <nav>
-    <a href="offering.html">Record Offering</a>
-    <a href="/">Back Home</a>
-  </nav>
+{% block title %}Offering History - ICF Finance{% endblock %}
 
-  <h2>Cash Offerings</h2>
+{% block content %}
+<div class="container margin-top-lg">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Offering History</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">← Back to Dashboard</a>
+  </div>
 
-  <!-- New date‐range filter -->
-<form method="get" id="month-year-filter" style="margin:1em 0;">
-  <!-- Same filter layout as the Income Report -->
-  <form method="get" action="{{ url_for('offerings_list') }}" id="ofilters">
-    <input type="date" name="start_date" id="start"
-       value="{{ start_date }}"
-       {% if min_date %}min="{{ min_date }}"{% endif %}
-       {% if end_date %}max="{{ end_date }}"{% elif max_date %}max="{{ max_date }}"{% endif %}>
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="get" action="{{ url_for('offerings_list') }}"
+      style="display: flex; gap: 1rem; align-items: flex-end;">
+      <div>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Start Date</label>
+        <input type="date" name="start_date" value="{{ start_date }}"
+          style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.3rem;">
+      </div>
+      <div>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">End Date</label>
+        <input type="date" name="end_date" value="{{ end_date }}"
+          style="padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 0.3rem;">
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="{{ url_for('offerings_list') }}" class="btn btn-outline">Clear</a>
+    </form>
+  </div>
 
-<input type="date" name="end_date" id="end"
-       value="{{ end_date }}"
-       {% if start_date %}min="{{ start_date }}"{% elif min_date %}min="{{ min_date }}"{% endif %}
-       {% if max_date %}max="{{ max_date }}"{% endif %}>
-
-    <div>
-      <button type="submit">Filter</button>
-      <a href="{{ url_for('offerings_list') }}" style="margin-left:.5rem;">Clear</a>
-    </div>
-</form>
-
-<script>
-  // When month/year changes, snap calendars to that month/year
-  const mSel = document.getElementById('month');
-  const ySel = document.getElementById('year');
-  const sInp = document.getElementById('start_date');
-  const eInp = document.getElementById('end_date');
-
-  function setRangeFromMonthYear(){
-    const m = mSel.value;     // "01".."12" or ""
-    const y = ySel.value;     // "2025" or ""
-    if (!m && !y) return;     // nothing selected
-
-    const today = new Date();
-    const year  = y ? parseInt(y, 10) : today.getFullYear();
-
-    if (m) {
-      const month = parseInt(m, 10);
-      const last = new Date(year, month, 0).getDate(); // days in month
-      sInp.value = `${year}-${m}-01`;
-      eInp.value = `${year}-${m}-${String(last).padStart(2,'0')}`;
-    } else {
-      // year only
-      sInp.value = `${year}-01-01`;
-      eInp.value = `${year}-12-31`;
-    }
-  }
-
-  mSel.addEventListener('change', setRangeFromMonthYear);
-  ySel.addEventListener('change', setRangeFromMonthYear);
-</script>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Total (€)</th>
-        <th>Counted By</th>
-        <th>Checked By</th>
-        <th>Carrier</th>
-        <th>Deposited?</th>
-        <th>Deposit Date</th>
-        <th>Edit</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for o in offers %}
-      <tr>
-        <td>{{ o.date }}</td>
-        <td>{{ '%.2f'|format(o.total_amount) }}</td>
-        <td>{{ o.counted_by or '-' }}</td>
-        <td>{{ o.checked_by or '-' }}</td>
-        <td>{{ o.carrier_of_envelope or '-' }}</td>
-        <td>{{ 'Yes' if o.deposit_status else 'No' }}</td>
-        <td>{{ o.deposit_date or '-' }}</td>
-        <td><a href="/offeringedit.html?id={{ o.id }}" class="edit-link">Edit</a></td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="8">No offerings recorded yet.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-</body>
-</html>
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Total (€)</th>
+          <th>Counted By</th>
+          <th>Checked By</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in offers %}
+        <tr>
+          <td>{{ o.date }}</td>
+          <td style="font-weight: 600;">{{ '%.2f'|format(o.total_amount) }}</td>
+          <td>{{ o.counted_by or '-' }}</td>
+          <td>{{ o.checked_by or '-' }}</td>
+          <td>
+            {% if o.deposit_status %}
+            <span
+              style="background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.85rem;">Deposited</span>
+            {% else %}
+            <span
+              style="background: #fee2e2; color: #991b1b; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.85rem;">Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('edit_offering', id=o.id) }}" class="btn btn-outline"
+              style="padding: 0.2rem 0.5rem; font-size: 0.9rem;">View/Edit</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">No offerings
+            recorded yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

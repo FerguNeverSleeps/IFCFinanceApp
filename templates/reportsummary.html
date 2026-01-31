@@ -1,81 +1,96 @@
-<!doctype html>
-<html>
-<head>
-  <title>Income Report – Summary</title>
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; padding: 24px; }
-    h1 { margin-bottom: 8px; }
-    .filters { color: #555; margin-bottom: 16px; }
-    table { border-collapse: collapse; width: 600px; max-width: 100%; }
-    th, td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; }
-    tfoot td { font-weight: bold; }
-    .actions { margin: 20px 0; }
-    .pill { display:inline-block; padding: 2px 8px; border-radius:100px; background:#f5f5f5; margin-right:6px; }
-  </style>
-</head>
-<body>
-  <a href="report.html">&larr; Back to report</a>
-  <h1>Report summary</h1>
-  <div class="filters">
-<!--    <span class="pill" id="start">Start: {{ start or '—' }}</span>-->
-<!--    <span class="pill" id="end">End: {{ end or '—' }}</span>-->
-<!--    <span class="pill">Category: {{ category or 'All' }}</span>-->
-    {% if start %}<span class="pill">Start: {{ start }}</span>{% endif %}
-  {% if end %}<span class="pill">End: {{ end }}</span>{% endif %}
-  <span class="pill">Category: {{ category or 'all categories' }}</span>
+{% extends "base.html" %}
+
+{% block title %}Report Summary - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin-top: 3rem;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Report Summary</h2>
+    <a href="{{ url_for('report') }}" class="btn btn-outline">← Back to Full Report</a>
   </div>
-  <script>
-    const startd = localStorage.getItem('start-date')
-    const endd = localStorage.getItem('end-date')
 
-    document.getElementById('start').textContent = startd
-    document.getElementById('end').textContent = endd
+  <div class="card">
+    <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);">
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        {% if start %}
+        <span
+          style="background: #eff6ff; color: #1e3a8a; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.85rem; font-weight: 500;">
+          Start: {{ start }}
+        </span>
+        {% endif %}
+        {% if end %}
+        <span
+          style="background: #eff6ff; color: #1e3a8a; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.85rem; font-weight: 500;">
+          End: {{ end }}
+        </span>
+        {% endif %}
+        <span
+          style="background: #f3f4f6; color: #374151; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.85rem; font-weight: 500;">
+          Category: {{ category or 'All Categories' }}
+        </span>
+      </div>
 
-  </script>
+      <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--color-text-muted);">Overall Total</h3>
+      <p style="font-size: 2.5rem; font-weight: 700; color: var(--color-primary);">
+        € {{ "{:,.2f}".format(total or 0) }}
+      </p>
+    </div>
 
-  <h3>Overall total</h3>
-  <p style="font-size:1.25rem; font-weight:700;">€ {{ "{:,.2f}".format(total or 0) }}</p>
+    <h3 style="margin-bottom: 1rem;">Totals by Category</h3>
+    <div class="table-container" style="box-shadow: none; border: 1px solid var(--color-border);">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Transactions</th>
+            <th>Total (€)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in by_category %}
+          <tr>
+            <td style="font-weight: 500;">{{ row.category }}</td>
+            <td>{{ row.count }}</td>
+            <td style="font-family: monospace; font-weight: 600;">€ {{ "{:,.2f}".format(row.total or 0) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--color-text-muted);">No data.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background: #f9fafb;">
+            <td colspan="2" style="font-weight: 700;">Grand Total</td>
+            <td style="font-family: monospace; font-weight: 700; color: var(--color-primary-dark);">€ {{
+              "{:,.2f}".format(total or 0) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
 
-  <h3>Totals by category</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Category</th>
-        <th>Transactions</th>
-        <th>Total (€)</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for row in by_category %}
-      <tr>
-        <td>{{ row.category }}</td>
-        <td>{{ row.count }}</td>
-        <td>€ {{ "{:,.2f}".format(row.total or 0) }}</td>
-      </tr>
-    {% else %}
-      <tr><td colspan="3">No results for the selected filters.</td></tr>
-    {% endfor %}
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">Grand total</td>
-        <td>€ {{ "{:,.2f}".format(total or 0) }}</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- Nice optional extra: show a monthly breakdown if you enabled it in the route-->
-  {% if show_monthly and monthly %}
-  <h3 style="margin-top:28px;">Monthly breakdown</h3>
-  <table>
-    <thead><tr><th>Month</th><th>Total (€)</th></tr></thead>
-    <tbody>
-      {% for m in monthly %}
-        <tr><td>{{ m.period }}</td><td>€ {{ "{:,.2f}".format(m.total or 0) }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endif %}
-
-</body>
-</html>
+    {% if show_monthly and monthly %}
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Monthly Breakdown</h3>
+    <div class="table-container" style="box-shadow: none; border: 1px solid var(--color-border);">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total (€)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in monthly %}
+          <tr>
+            <td>{{ m.period }}</td>
+            <td>€ {{ "{:,.2f}".format(m.total or 0) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

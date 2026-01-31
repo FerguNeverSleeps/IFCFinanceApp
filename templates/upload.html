@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Import Data - ICF Finance{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin-top: 3rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Import Data</h2>
+        <a href="{{ url_for('index') }}" class="btn btn-outline">← Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">Upload Givt / Excel File</h3>
+        <p style="margin-bottom: 2rem; color: var(--color-text-muted);">
+            Select a correctly formatted Excel (.xlsx) or CSV file to import transactions.
+        </p>
+
+        <form action="{{ url_for('file_upload') }}" method="post" enctype="multipart/form-data"
+            style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+            <div
+                style="border: 2px dashed var(--color-border); padding: 2rem; text-align: center; border-radius: 0.5rem; background: #f9fafb;">
+                <input type="file" name="file" id="file" required style="width: 100%; max-width: 300px;">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Upload & Import</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

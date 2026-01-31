@@ -13,6 +13,7 @@ import openpyxl
 from sqlalchemy import text, select, func, bindparam, types as satypes
 from functools import wraps
 from models import db, Offering
+from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from models import OfferingCashSplit, ExcelUpload, Transaction,transaction1,db, User
 import secrets
@@ -24,13 +25,18 @@ port_num = "5432"
 ngrok_num = "4"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres.vwztopgxiiaujlmagico:icfdat190501@aws-1-eu-central-1.pooler.supabase.com:5432/postgres'
+# Use environment variable for DB URI, fallback to local docker instance
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL', 
+    'postgresql://postgres:password@localhost:5440/ifcfinance'
+)
 
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+db.init_app(app)
+migrate = Migrate(app, db)
 AGG_SQL = text("""
 WITH categories AS (
   SELECT DISTINCT "category" FROM "transaction"
@@ -222,6 +228,21 @@ def load_user():
     uid = session.get("user_id")
     # no Model.query here either
     g.user = db.session.get(User, uid) if uid else None
+
+@app.context_processor
+def inject_global_vars():
+    import random
+    verses = [
+        {"text": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.", "ref": "John 3:16"},
+        {"text": "Trust in the LORD with all your heart and lean not on your own understanding.", "ref": "Proverbs 3:5"},
+        {"text": "The LORD is my shepherd, I lack nothing.", "ref": "Psalm 23:1"},
+        {"text": "I can do all this through him who gives me strength.", "ref": "Philippians 4:13"},
+        {"text": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness.", "ref": "Galatians 5:22"},
+    ]
+    return dict(
+        current_year=date.today().year,
+        verse=random.choice(verses)
+    )
 
 # ---- routes ----
 @app.route("/login.html", methods=["GET", "POST"])

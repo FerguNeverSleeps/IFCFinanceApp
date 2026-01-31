@@ -1,16 +1,29 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
+
+{% block title %}Manual Entry - ICF Finance{% endblock %}
+
 {% block content %}
-  <h2>Manual Coin &amp; Bill Entry</h2>
-  <form id="manual-form" method="POST" action="{{ url_for('add_manual') }}">
-    <div class="denomination-list">
-      {% for denom in [0.01,0.05,0.10,0.25,1,5,10,20,50,100] %}
-        <div class="denom-item">
-          <label>{{ denom|currency }} ×
-            <input type="number" name="qty_{{ denom }}" value="0" min="0">
-          </label>
+<div class="container" style="max-width: 600px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Manual Coin & Bill Entry</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div class="card">
+    <form id="manual-form" method="POST" action="{{ url_for('add_manual') }}">
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        {% for denom in [0.01, 0.05, 0.10, 0.25, 1, 5, 10, 20, 50, 100] %}
+        <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; text-align: center;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">€{{ denom }}</label>
+          <input type="number" name="qty_{{ denom }}" value="0" min="0"
+            style="width: 100%; padding: 0.5rem; text-align: center; border: 1px solid var(--color-border); border-radius: 0.3rem;">
         </div>
-      {% endfor %}
-    </div>
-    <button class="btn btn-primary">Add to Database</button>
-  </form>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Add to Database</button>
+    </form>
+  </div>
+</div>
 {% endblock %}
