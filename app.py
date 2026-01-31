@@ -302,24 +302,25 @@ def manual_count():
     return render_template('indexmanual.html', current_year=date.today().year)
 
 
-
 @app.route('/monthly-report')
 def report():
     return render_template('report.html', current_year=date.today().year)
 
+@app.route('/import-givt')
+def import_givt():
+    return render_template('upload.html', current_year=date.today().year)
 
+@app.route('/file_upload.html', methods=['POST'])
+def file_upload():
+    file = request.files['file']
 
-# @app.route('/file_upload.html', methods=['POST'])
-# def file_upload():
-#     file = request.files['file']
-#
-#     df = pandas.read_excel(file)
-#     if not os.path.exists("report"):
-#         os.mkdir("report")
-#     filename = f'{date.today()}.csv'
-#     filepath = os.path.join(app.config['report'], file.filename)
-#     df.to_csv(filepath, index=False)
-#     return render_template('report.html', filename=filename)
+    df = pandas.read_excel(file)
+    if not os.path.exists("report"):
+        os.mkdir("report")
+    filename = f'{date.today()}.csv'
+    filepath = os.path.join(app.config['report'], file.filename)
+    df.to_csv(filepath, index=False)
+    return render_template('report.html', filename=filename)
 
 #NOT IN USE
 # # --- Route: Upload Excel ---
